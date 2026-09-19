@@ -1,6 +1,6 @@
 import { jsonResponse, readBody } from '../../_shared/helpers';
 import { requireAdmin } from '../../_shared/auth';
-import { firestoreDelete } from '../../_shared/firestore';
+import { kvDelete } from '../../_shared/kv';
 
 export const onRequestPost: PagesFunction = async (context) => {
   const auth = await requireAdmin(context.request, context.env);
@@ -10,7 +10,7 @@ export const onRequestPost: PagesFunction = async (context) => {
     const { tokenId } = await readBody(context.request);
     if (!tokenId) return jsonResponse({ error: 'Token is required' }, 400);
 
-    try { await firestoreDelete(context.env as any, 'kit_tokens', tokenId.trim()); } catch (e) {}
+    await kvDelete((context.env as any).APP_KV, 'kit_tokens', tokenId.trim());
 
     return jsonResponse({ success: true, message: 'Token deleted successfully' });
   } catch (err: any) {

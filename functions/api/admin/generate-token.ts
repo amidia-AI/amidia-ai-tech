@@ -1,6 +1,6 @@
 import { jsonResponse, readBody, stripHtml, randomHex } from '../../_shared/helpers';
 import { requireAdmin } from '../../_shared/auth';
-import { firestoreSet, firestoreGet } from '../../_shared/firestore';
+import { kvSet, kvGet } from '../../_shared/kv';
 
 export const onRequestPost: PagesFunction = async (context) => {
   const auth = await requireAdmin(context.request, context.env);
@@ -60,19 +60,22 @@ export const onRequestPost: PagesFunction = async (context) => {
       commercialUsagePrice: parsedCommercialUsagePrice,
     };
 
-    try {
-      await firestoreSet(context.env as any, 'kit_tokens', token, tokenDoc);
-      if (submissionId) {
-        const existingSub = await firestoreGet(context.env as any, 'kit_submissions', submissionId);
+    const kv = (context.env as any).APP_KV;
+    await kvSet(kv, 'kit_tokens', token, tokenDoc);
+    if (submissionId) {
+      try {
+        const existingSub = await kvGet(kv, 'kit_submissions', submissionId);
         if (existingSub) {
           existingSub.status = 'token_generated';
           existingSub.token = token;
           existingSub.expiresAt = expiresAt;
           existingSub.link = `/kit/${token}`;
-          await firestoreSet(context.env as any, 'kit_submissions', submissionId, existingSub);
+          await kvSet(kv, 'kit_submissions', submissionId, existingSub);
         }
+      } catch (e) {
+        // Submission update is best-effort; the token itself was already saved successfully above.
       }
-    } catch (e) {}
+    }
 
     return jsonResponse({
       success: true,

@@ -1,5 +1,5 @@
-import { jsonResponse, readBody, stripHtml, randomHex } from '../../_shared/helpers';
-import { firestoreAdd } from '../../_shared/firestore';
+import { jsonResponse, readBody, stripHtml } from '../../_shared/helpers';
+import { kvAdd } from '../../_shared/kv';
 
 export const onRequestPost: PagesFunction = async (context) => {
   try {
@@ -26,10 +26,7 @@ export const onRequestPost: PagesFunction = async (context) => {
       createdAt: new Date().toISOString(),
     };
 
-    let docId = randomHex(8);
-    try {
-      docId = await firestoreAdd(context.env as any, 'kit_submissions', submissionDoc);
-    } catch (e) {}
+    const docId = await kvAdd((context.env as any).APP_KV, 'kit_submissions', submissionDoc);
 
     return jsonResponse({
       success: true,

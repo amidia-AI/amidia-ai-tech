@@ -1,6 +1,6 @@
 import { jsonResponse } from '../../_shared/helpers';
 import { requireAdmin } from '../../_shared/auth';
-import { firestoreList } from '../../_shared/firestore';
+import { kvList } from '../../_shared/kv';
 
 export const onRequestGet: PagesFunction = async (context) => {
   const auth = await requireAdmin(context.request, context.env);
@@ -8,7 +8,7 @@ export const onRequestGet: PagesFunction = async (context) => {
 
   try {
     let submissions: any[] = [];
-    try { submissions = await firestoreList(context.env as any, 'kit_submissions'); } catch (e) {}
+    try { submissions = await kvList((context.env as any).APP_KV, 'kit_submissions'); } catch (e) {}
 
     submissions.sort((a: any, b: any) => {
       const timeA = new Date(a.createdAt).getTime() || 0;

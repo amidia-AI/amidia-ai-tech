@@ -1,6 +1,6 @@
-import { jsonResponse, readBody, stripHtml, randomHex } from '../../../_shared/helpers';
+import { jsonResponse, readBody, stripHtml } from '../../../_shared/helpers';
 import { requireAdmin } from '../../../_shared/auth';
-import { firestoreList, firestoreAdd } from '../../../_shared/firestore';
+import { kvList, kvAdd } from '../../../_shared/kv';
 import { DEFAULT_STUDIO_SCREENSHOTS } from '../../../_shared/constants';
 
 export const onRequestGet: PagesFunction = async (context) => {
@@ -9,7 +9,7 @@ export const onRequestGet: PagesFunction = async (context) => {
 
   try {
     let screenshots: any[] = [];
-    try { screenshots = await firestoreList(context.env as any, 'studio_screenshots'); } catch (e) {}
+    try { screenshots = await kvList((context.env as any).APP_KV, 'studio_screenshots'); } catch (e) {}
 
     for (const def of DEFAULT_STUDIO_SCREENSHOTS) {
       if (!screenshots.some((s) => s.id === def.id)) {
@@ -50,8 +50,7 @@ export const onRequestPost: PagesFunction = async (context) => {
       createdAt: new Date().toISOString(),
     };
 
-    let id = randomHex(8);
-    try { id = await firestoreAdd(context.env as any, 'studio_screenshots', screenshotDoc); } catch (e) {}
+    const id = await kvAdd((context.env as any).APP_KV, 'studio_screenshots', screenshotDoc);
 
     return jsonResponse({ success: true, id });
   } catch (err: any) {

@@ -85,11 +85,15 @@ export async function firestoreSet(env: FirestoreEnv, collection: string, docId:
   const base = getBase(env);
   const key = getApiKey(env);
   const fields = toFirestoreFields(data);
-  await fetch(`${base}/${collection}/${docId}?key=${key}`, {
+  const res = await fetch(`${base}/${collection}/${docId}?key=${key}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ fields }),
   });
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`Firestore REST error (${res.status}): ${txt}`);
+  }
 }
 
 export async function firestoreGet(env: FirestoreEnv, collection: string, docId: string): Promise<any | null> {

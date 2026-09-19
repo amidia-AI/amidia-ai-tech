@@ -1,6 +1,6 @@
-import { jsonResponse, readBody, stripHtml, randomHex } from '../../../_shared/helpers';
+import { jsonResponse, readBody, stripHtml } from '../../../_shared/helpers';
 import { requireAdmin } from '../../../_shared/auth';
-import { firestoreList, firestoreAdd } from '../../../_shared/firestore';
+import { kvList, kvAdd } from '../../../_shared/kv';
 
 export const onRequestGet: PagesFunction = async (context) => {
   const auth = await requireAdmin(context.request, context.env);
@@ -8,7 +8,7 @@ export const onRequestGet: PagesFunction = async (context) => {
 
   try {
     let ideas: any[] = [];
-    try { ideas = await firestoreList(context.env as any, 'video_ideas'); } catch (e) {}
+    try { ideas = await kvList((context.env as any).APP_KV, 'video_ideas'); } catch (e) {}
 
     ideas.sort((a: any, b: any) => {
       const timeA = new Date(a.createdAt).getTime() || 0;
@@ -39,8 +39,7 @@ export const onRequestPost: PagesFunction = async (context) => {
       createdAt: new Date().toISOString(),
     };
 
-    let id = randomHex(8);
-    try { id = await firestoreAdd(context.env as any, 'video_ideas', ideaDoc); } catch (e) {}
+    const id = await kvAdd((context.env as any).APP_KV, 'video_ideas', ideaDoc);
 
     return jsonResponse({ success: true, idea: { id, ...ideaDoc } });
   } catch (err: any) {
