@@ -164,7 +164,7 @@ export function GatedKit() {
 
               setData({
                 brandName: matched.brandName || matched.company || 'Partner Brand',
-                company: matched.company || matched.brandName || '',
+                company: matched.company || '',
                 preparedMonthYear: monthYear,
                 expiresAt: matched.expiresAt,
                 screenshots: localScreenshots.map((s: any) => ({ ...s, monthYear })),
@@ -203,7 +203,7 @@ export function GatedKit() {
               const monthYear = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
               setData({
                 brandName: matched.brandName || matched.company || 'Partner Brand',
-                company: matched.company || matched.brandName || '',
+                company: matched.company || '',
                 preparedMonthYear: monthYear,
                 expiresAt: matched.expiresAt,
                 screenshots: localScreenshots.map((s: any) => ({ ...s, monthYear })),
@@ -887,9 +887,9 @@ export function GatedKit() {
               <span>Direct Production Access</span>
             </div>
             <h3 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-              {data.brandName && data.brandName !== 'Partner Brand'
-                ? `Confirm your booking for ${data.brandName}?`
-                : 'Ready to secure a booking?'}
+              {data.company
+                ? `Ready to book a spot for ${data.company}?`
+                : `Ready to book a spot, ${data.brandName}?`}
             </h3>
             <p className="text-xs sm:text-sm text-neutral-300 max-w-lg mx-auto leading-relaxed">
               Confirm your booking below to initiate project scoping and lock in your target publishing date.

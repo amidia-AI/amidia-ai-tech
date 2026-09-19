@@ -50,7 +50,7 @@ export const onRequestPost: PagesFunction = async (context) => {
       token,
       submissionId: submissionId || '',
       brandName: stripHtml(String(brandName || company).trim()).slice(0, 160),
-      company: stripHtml(String(company || brandName).trim()).slice(0, 160),
+      company: company ? stripHtml(String(company).trim()).slice(0, 160) : '',
       email: email ? stripHtml(String(email).trim().toLowerCase()).slice(0, 200) : '',
       createdAt: new Date().toISOString(),
       expiresAt,
