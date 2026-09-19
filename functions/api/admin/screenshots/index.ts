@@ -9,7 +9,7 @@ export const onRequestGet: PagesFunction = async (context) => {
 
   try {
     let screenshots: any[] = [];
-    try { screenshots = await firestoreList('studio_screenshots'); } catch (e) {}
+    try { screenshots = await firestoreList(context.env as any, 'studio_screenshots'); } catch (e) {}
 
     for (const def of DEFAULT_STUDIO_SCREENSHOTS) {
       if (!screenshots.some((s) => s.id === def.id)) {
@@ -51,7 +51,7 @@ export const onRequestPost: PagesFunction = async (context) => {
     };
 
     let id = randomHex(8);
-    try { id = await firestoreAdd('studio_screenshots', screenshotDoc); } catch (e) {}
+    try { id = await firestoreAdd(context.env as any, 'studio_screenshots', screenshotDoc); } catch (e) {}
 
     return jsonResponse({ success: true, id });
   } catch (err: any) {

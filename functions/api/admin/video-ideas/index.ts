@@ -8,7 +8,7 @@ export const onRequestGet: PagesFunction = async (context) => {
 
   try {
     let ideas: any[] = [];
-    try { ideas = await firestoreList('video_ideas'); } catch (e) {}
+    try { ideas = await firestoreList(context.env as any, 'video_ideas'); } catch (e) {}
 
     ideas.sort((a: any, b: any) => {
       const timeA = new Date(a.createdAt).getTime() || 0;
@@ -40,7 +40,7 @@ export const onRequestPost: PagesFunction = async (context) => {
     };
 
     let id = randomHex(8);
-    try { id = await firestoreAdd('video_ideas', ideaDoc); } catch (e) {}
+    try { id = await firestoreAdd(context.env as any, 'video_ideas', ideaDoc); } catch (e) {}
 
     return jsonResponse({ success: true, idea: { id, ...ideaDoc } });
   } catch (err: any) {

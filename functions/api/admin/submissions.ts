@@ -8,7 +8,7 @@ export const onRequestGet: PagesFunction = async (context) => {
 
   try {
     let submissions: any[] = [];
-    try { submissions = await firestoreList('kit_submissions'); } catch (e) {}
+    try { submissions = await firestoreList(context.env as any, 'kit_submissions'); } catch (e) {}
 
     submissions.sort((a: any, b: any) => {
       const timeA = new Date(a.createdAt).getTime() || 0;

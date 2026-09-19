@@ -10,7 +10,7 @@ export const onRequestPost: PagesFunction = async (context) => {
     const { tokenId } = await readBody(context.request);
     if (!tokenId) return jsonResponse({ error: 'Token is required' }, 400);
 
-    try { await firestoreDelete('kit_tokens', tokenId.trim()); } catch (e) {}
+    try { await firestoreDelete(context.env as any, 'kit_tokens', tokenId.trim()); } catch (e) {}
 
     return jsonResponse({ success: true, message: 'Token deleted successfully' });
   } catch (err: any) {

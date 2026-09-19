@@ -28,7 +28,7 @@ export const onRequestPost: PagesFunction = async (context) => {
 
     let docId = randomHex(8);
     try {
-      docId = await firestoreAdd('kit_submissions', submissionDoc);
+      docId = await firestoreAdd(context.env as any, 'kit_submissions', submissionDoc);
     } catch (e) {}
 
     return jsonResponse({

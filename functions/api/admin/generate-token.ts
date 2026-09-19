@@ -61,15 +61,15 @@ export const onRequestPost: PagesFunction = async (context) => {
     };
 
     try {
-      await firestoreSet('kit_tokens', token, tokenDoc);
+      await firestoreSet(context.env as any, 'kit_tokens', token, tokenDoc);
       if (submissionId) {
-        const existingSub = await firestoreGet('kit_submissions', submissionId);
+        const existingSub = await firestoreGet(context.env as any, 'kit_submissions', submissionId);
         if (existingSub) {
           existingSub.status = 'token_generated';
           existingSub.token = token;
           existingSub.expiresAt = expiresAt;
           existingSub.link = `/kit/${token}`;
-          await firestoreSet('kit_submissions', submissionId, existingSub);
+          await firestoreSet(context.env as any, 'kit_submissions', submissionId, existingSub);
         }
       }
     } catch (e) {}

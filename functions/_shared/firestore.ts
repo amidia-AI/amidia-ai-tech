@@ -1,7 +1,18 @@
-const PROJECT_ID = 'gen-lang-client-0164020885';
-const DB_ID = 'ai-studio-remixultrafluidw-70bbea79-5f67-4526-8d70-d0e6504f5e30';
-const API_KEY = 'AIzaSyAGIQqE3ORmmiAqNPWQW6XiMXx_cZGC0Cw';
-const BASE = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/${DB_ID}/documents`;
+export interface FirestoreEnv {
+  FIREBASE_PROJECT_ID?: string;
+  FIREBASE_DB_ID?: string;
+  FIREBASE_API_KEY?: string;
+}
+
+function getBase(env: FirestoreEnv): string {
+  const projectId = env.FIREBASE_PROJECT_ID || '';
+  const dbId = env.FIREBASE_DB_ID || '(default)';
+  return `https://firestore.googleapis.com/v1/projects/${projectId}/databases/${dbId}/documents`;
+}
+
+function getApiKey(env: FirestoreEnv): string {
+  return env.FIREBASE_API_KEY || '';
+}
 
 function toFirestoreFields(obj: any): any {
   const fields: any = {};
@@ -53,9 +64,11 @@ function fromFirestoreDoc(doc: any): any {
   return result;
 }
 
-export async function firestoreAdd(collection: string, data: any): Promise<string> {
+export async function firestoreAdd(env: FirestoreEnv, collection: string, data: any): Promise<string> {
+  const base = getBase(env);
+  const key = getApiKey(env);
   const fields = toFirestoreFields(data);
-  const res = await fetch(`${BASE}/${collection}?key=${API_KEY}`, {
+  const res = await fetch(`${base}/${collection}?key=${key}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ fields }),
@@ -68,27 +81,33 @@ export async function firestoreAdd(collection: string, data: any): Promise<strin
   return json.name ? json.name.split('/').pop() : '';
 }
 
-export async function firestoreSet(collection: string, docId: string, data: any): Promise<void> {
+export async function firestoreSet(env: FirestoreEnv, collection: string, docId: string, data: any): Promise<void> {
+  const base = getBase(env);
+  const key = getApiKey(env);
   const fields = toFirestoreFields(data);
-  await fetch(`${BASE}/${collection}/${docId}?key=${API_KEY}`, {
+  await fetch(`${base}/${collection}/${docId}?key=${key}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ fields }),
   });
 }
 
-export async function firestoreGet(collection: string, docId: string): Promise<any | null> {
-  const res = await fetch(`${BASE}/${collection}/${docId}?key=${API_KEY}`);
+export async function firestoreGet(env: FirestoreEnv, collection: string, docId: string): Promise<any | null> {
+  const base = getBase(env);
+  const key = getApiKey(env);
+  const res = await fetch(`${base}/${collection}/${docId}?key=${key}`);
   if (res.status === 404 || !res.ok) return null;
   const json: any = await res.json();
   return fromFirestoreDoc(json);
 }
 
-export async function firestoreList(collection: string): Promise<any[]> {
+export async function firestoreList(env: FirestoreEnv, collection: string): Promise<any[]> {
+  const base = getBase(env);
+  const key = getApiKey(env);
   const all: any[] = [];
   let pageToken = '';
   for (;;) {
-    const url = `${BASE}/${collection}?key=${API_KEY}&pageSize=300${pageToken ? '&pageToken=' + pageToken : ''}`;
+    const url = `${base}/${collection}?key=${key}&pageSize=300${pageToken ? '&pageToken=' + pageToken : ''}`;
     const res = await fetch(url);
     if (!res.ok) break;
     const json: any = await res.json();
@@ -99,6 +118,8 @@ export async function firestoreList(collection: string): Promise<any[]> {
   return all;
 }
 
-export async function firestoreDelete(collection: string, docId: string): Promise<void> {
-  await fetch(`${BASE}/${collection}/${docId}?key=${API_KEY}`, { method: 'DELETE' });
+export async function firestoreDelete(env: FirestoreEnv, collection: string, docId: string): Promise<void> {
+  const base = getBase(env);
+  const key = getApiKey(env);
+  await fetch(`${base}/${collection}/${docId}?key=${key}`, { method: 'DELETE' });
 }

@@ -14,11 +14,11 @@ export const onRequestPatch: PagesFunction = async (context) => {
     if (typeof isBooked === 'boolean') {
       currentBooked = isBooked;
     } else {
-      const existing = await firestoreGet('video_ideas', id);
+      const existing = await firestoreGet(context.env as any, 'video_ideas', id);
       currentBooked = existing ? !Boolean(existing.isBooked) : true;
     }
 
-    try { await firestoreSet('video_ideas', id, { isBooked: currentBooked }); } catch (e) {}
+    try { await firestoreSet(context.env as any, 'video_ideas', id, { isBooked: currentBooked }); } catch (e) {}
 
     return jsonResponse({ success: true, isBooked: currentBooked });
   } catch (err: any) {

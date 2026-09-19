@@ -8,7 +8,7 @@ export const onRequestDelete: PagesFunction = async (context) => {
 
   try {
     const id = (context.params as any).id;
-    try { await firestoreDelete('video_ideas', id); } catch (e) {}
+    try { await firestoreDelete(context.env as any, 'video_ideas', id); } catch (e) {}
     return jsonResponse({ success: true });
   } catch (err: any) {
     return jsonResponse({ error: err.message || 'Failed to delete video idea' }, 500);

@@ -25,7 +25,7 @@ export const onRequestPost: PagesFunction = async (context) => {
     }
 
     let docId = randomHex(8);
-    try { docId = await firestoreAdd('content', docData); } catch (e) {}
+    try { docId = await firestoreAdd(context.env as any, 'content', docData); } catch (e) {}
 
     return jsonResponse({ success: true, id: docId });
   } catch (err: any) {

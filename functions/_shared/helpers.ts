@@ -1,5 +1,19 @@
 export function stripHtml(str: string): string {
-  return str.replace(/<[^>]*>/g, '').replace(/&[^;]+;/g, ' ').trim();
+  let s = str;
+  s = s.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
+  let prev = '';
+  while (prev !== s) {
+    prev = s;
+    s = s.replace(/<[^>]*>?/g, '');
+  }
+  s = s.replace(/&lt;/gi, '<').replace(/&gt;/gi, '>').replace(/&amp;/gi, '&')
+       .replace(/&quot;/gi, '"').replace(/&#x27;/gi, "'").replace(/&#x2F;/gi, '/');
+  s = s.replace(/<[^>]*>?/g, '');
+  s = s.replace(/javascript\s*:/gi, '')
+       .replace(/vbscript\s*:/gi, '')
+       .replace(/data\s*:/gi, '')
+       .replace(/on\w+\s*=/gi, '');
+  return s.trim();
 }
 
 export function randomHex(bytes: number): string {

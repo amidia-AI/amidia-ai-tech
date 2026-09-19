@@ -9,7 +9,7 @@ export const onRequestGet: PagesFunction = async (context) => {
       return jsonResponse({ error: 'Not Found' }, 404);
     }
 
-    let tokenData = await firestoreGet('kit_tokens', token);
+    let tokenData = await firestoreGet(context.env as any, 'kit_tokens', token);
 
     if (!tokenData || tokenData.revoked) {
       return jsonResponse({ error: 'Not Found' }, 404);
@@ -30,11 +30,11 @@ export const onRequestGet: PagesFunction = async (context) => {
       userAgent: context.request.headers.get('user-agent') || 'Unknown User-Agent',
       ip: context.request.headers.get('cf-connecting-ip') || context.request.headers.get('x-forwarded-for') || '0.0.0.0',
     };
-    try { await firestoreAdd('kit_views', viewLog); } catch (e) {}
+    try { await firestoreAdd(context.env as any, 'kit_views', viewLog); } catch (e) {}
 
     let screenshots: any[] = [...DEFAULT_STUDIO_SCREENSHOTS];
     try {
-      const remoteSnaps = await firestoreList('studio_screenshots');
+      const remoteSnaps = await firestoreList(context.env as any, 'studio_screenshots');
       if (remoteSnaps.length > 0) {
         for (const r of remoteSnaps) {
           if (!screenshots.some((s) => s.id === r.id || s.imageUrl === r.imageUrl)) {
@@ -46,7 +46,7 @@ export const onRequestGet: PagesFunction = async (context) => {
 
     let videoIdeas: any[] = [];
     try {
-      videoIdeas = await firestoreList('video_ideas');
+      videoIdeas = await firestoreList(context.env as any, 'video_ideas');
     } catch (e) {}
 
     const currentMonthYear = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
