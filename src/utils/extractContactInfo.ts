@@ -191,6 +191,9 @@ export function extractCompanyName(text: string): string {
     }
   }
 
+  const handleMatch = cleaned.match(/@([A-Z][A-Za-z0-9]*)\b/);
+  if (handleMatch) return handleMatch[1];
+
   for (const line of lines) {
     const tokens = tokenizeLine(line);
     for (let i = 0; i < tokens.length; i++) {
