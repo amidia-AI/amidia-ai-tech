@@ -255,8 +255,8 @@ if (loadedScreenshots.length === 0) {
 }
 const memoryIdeas: any[] = loadLocalJson(IDEAS_FILE, []);
 
-const PRIMARY_ADMIN_EMAIL = 'ss3825424@gmail.com';
-const ADMIN_EMAILS = ['ss3825424@gmail.com'];
+const PRIMARY_ADMIN_EMAIL = '';
+const ADMIN_EMAILS: string[] = [];
 
 // Session secret must come from the environment. When it is missing we generate an
 // ephemeral one so the app still boots, but every restart invalidates old sessions.
