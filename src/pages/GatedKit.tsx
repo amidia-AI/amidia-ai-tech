@@ -887,9 +887,7 @@ export function GatedKit() {
               <span>Direct Production Access</span>
             </div>
             <h3 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-              {data.company
-                ? `Ready to book a spot for ${data.company}?`
-                : `Ready to book a spot, ${data.brandName}?`}
+              Confirm your booking {data.brandName}?
             </h3>
             <p className="text-xs sm:text-sm text-neutral-300 max-w-lg mx-auto leading-relaxed">
               Confirm your booking below to initiate project scoping and lock in your target publishing date.
