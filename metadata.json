@@ -1,0 +1,8 @@
+{
+  "name": "Remix UltraFluid Web Builder",
+  "description": "Official media kit and sponsorship portal for Amidia AI & Tech, featuring live channel analytics, sponsorship formats, and gated partner access.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

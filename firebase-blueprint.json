@@ -1,0 +1,85 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "App user profile record",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "User auth UID" },
+        "email": { "type": "string", "description": "User email address" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp" }
+      },
+      "required": ["uid", "email"]
+    },
+    "UserProgress": {
+      "title": "UserProgress",
+      "description": "User progress for challenges and checklists",
+      "type": "object",
+      "properties": {
+        "checklistState": { "type": "array", "description": "Array of boolean statuses" }
+      }
+    },
+    "Content": {
+      "title": "Content",
+      "description": "Published guide or challenge",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["challenge", "guide"], "description": "Content category" },
+        "title": { "type": "string", "description": "Title of content" },
+        "description": { "type": "string", "description": "Description of content" },
+        "coverTag": { "type": "string", "description": "Category badge text" },
+        "checklist": { "type": "array", "description": "Checklist step items" },
+        "resources": { "type": "array", "description": "Associated links or resources" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp created" }
+      },
+      "required": ["type", "title", "description", "coverTag"]
+    },
+    "VideoIdea": {
+      "title": "VideoIdea",
+      "description": "Upcoming or currently working video ideas for integrated partnerships",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "Title of the video idea" },
+        "description": { "type": "string", "description": "Brief description of the video content" },
+        "isBooked": { "type": "boolean", "description": "Whether this video idea has been booked for sponsorship" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp created" }
+      },
+      "required": ["title", "description"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Stores user account information."
+    },
+    "/users/{userId}/progress/{contentId}": {
+      "schema": "UserProgress",
+      "description": "Stores user checklist progress per content item."
+    },
+    "/content/{contentId}": {
+      "schema": "Content",
+      "description": "Stores public challenges and educational guides."
+    },
+    "/video_ideas/{ideaId}": {
+      "schema": "VideoIdea",
+      "description": "Stores video concepts for sponsor integration scoping."
+    },
+    "/kit_submissions/{submissionId}": {
+      "schema": "User",
+      "description": "Stores brand inquiries and requests for the private media kit."
+    },
+    "/kit_tokens/{tokenId}": {
+      "schema": "User",
+      "description": "Stores individual brand-specific access tokens."
+    },
+    "/kit_views/{viewId}": {
+      "schema": "User",
+      "description": "Stores access audit logs when a gated media kit is opened."
+    },
+    "/studio_screenshots/{screenshotId}": {
+      "schema": "User",
+      "description": "Stores verified YouTube Studio proof captures."
+    }
+  }
+}
+

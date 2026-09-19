@@ -1,0 +1,18 @@
+<svg viewBox="0 0 1000 1000" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bgGrad" cx="30%" cy="25%" r="70%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="45%" stop-color="#ebf7fe"/>
+      <stop offset="100%" stop-color="#d4eefd"/>
+    </radialGradient>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00aaff"/>
+      <stop offset="100%" stop-color="#0095f6"/>
+    </linearGradient>
+  </defs>
+  <circle cx="500" cy="500" r="490" fill="url(#bgGrad)"/>
+  <g transform="translate(45, 45) scale(0.91)">
+    <path d="M 165 750 C 160 740 162 725 174 706 L 452 278 C 468 254 492 240 520 240 L 700 240 C 724 240 744 260 744 284 L 744 734 C 744 750 730 764 714 764 L 666 764 C 650 764 636 750 636 734 L 636 348 L 535 348 L 260 758 C 252 770 238 776 224 774 L 182 768 C 172 766 166 758 165 750 Z" fill="url(#blueGrad)"/>
+    <path d="M 515 435 C 519 441 522 447 524 453 L 614 632 C 620 644 614 656 600 656 L 384 638 C 370 636 366 622 376 610 L 498 440 C 504 430 512 430 515 435 Z" fill="url(#blueGrad)"/>
+  </g>
+</svg>
