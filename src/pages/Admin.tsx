@@ -296,11 +296,15 @@ export function Admin() {
       setActionError('Could not confidently detect a name or company in that text. Please enter them manually.');
       return;
     }
-    if (contactName) setModalBrandName(contactName);
-    if (companyName) setModalCompany(companyName);
+    setModalBrandName(contactName);
+    setModalCompany(companyName);
     setShowExtractEmailModal(false);
     setExtractEmailText('');
-    setActionSuccess('Extracted contact info successfully!');
+    setActionSuccess(
+      contactName && companyName
+        ? 'Extracted contact info successfully!'
+        : `Extracted ${contactName ? 'name' : 'company'} only — the other field was left blank since it wasn't confidently found. Please fill it in manually.`
+    );
   };
 
   const copyToClipboard = async (text: string) => {
