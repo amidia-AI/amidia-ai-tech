@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { KitSubmission, KitToken, StudioScreenshot, KitViewLog, PricingPreset, VideoIdea } from '../types';
+import { extractContactInfo } from '../utils/extractContactInfo';
 
 const DEFAULT_PRESETS: PricingPreset[] = [
   { id: 'standard', name: 'Standard Rate', description: 'Default rates', dedicatedPrice: 1200, integratedPrice: 600, commercialUsagePrice: 350, expiryDays: '14', isCustom: false },
@@ -78,7 +79,6 @@ export function Admin() {
   // Extraction State
   const [showExtractEmailModal, setShowExtractEmailModal] = useState(false);
   const [extractEmailText, setExtractEmailText] = useState('');
-  const [isExtractingEmail, setIsExtractingEmail] = useState(false);
 
     // Screenshot states
   const [screenshotCategory, setScreenshotCategory] = useState<'demographics' | 'geography' | 'retention' | 'general'>('demographics');
@@ -288,29 +288,19 @@ export function Admin() {
     }
   };
 
-  const handleExtractEmailText = async () => {
+  const handleExtractEmailText = () => {
     if (!extractEmailText.trim()) return;
-    setIsExtractingEmail(true);
     setActionError(null);
-    try {
-      const token = await getAuthToken();
-      const res = await fetch('/api/admin/extract-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ emailText: extractEmailText })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to extract');
-      if (data.contactName) setModalBrandName(data.contactName);
-      if (data.companyName) setModalCompany(data.companyName);
-      setShowExtractEmailModal(false);
-      setExtractEmailText('');
-      setActionSuccess('Extracted contact info successfully!');
-    } catch (err: any) {
-      setActionError(err.message);
-    } finally {
-      setIsExtractingEmail(false);
+    const { contactName, companyName } = extractContactInfo(extractEmailText);
+    if (!contactName && !companyName) {
+      setActionError('Could not confidently detect a name or company in that text. Please enter them manually.');
+      return;
     }
+    if (contactName) setModalBrandName(contactName);
+    if (companyName) setModalCompany(companyName);
+    setShowExtractEmailModal(false);
+    setExtractEmailText('');
+    setActionSuccess('Extracted contact info successfully!');
   };
 
   const copyToClipboard = async (text: string) => {
@@ -575,9 +565,9 @@ export function Admin() {
                 onChange={e => setExtractEmailText(e.target.value)}
                 className="w-full p-3 border rounded-xl text-sm font-mono"
               />
-              <button onClick={handleExtractEmailText} disabled={isExtractingEmail || !extractEmailText.trim()} className="w-full py-3 bg-neutral-950 text-white rounded-xl font-bold flex justify-center items-center gap-2">
-                {isExtractingEmail ? <div className="w-4 h-4 border-2 border-t-transparent border-white rounded-full animate-spin"/> : <Sparkles className="w-4 h-4"/>}
-                Extract with AI
+              <button onClick={handleExtractEmailText} disabled={!extractEmailText.trim()} className="w-full py-3 bg-neutral-950 text-white rounded-xl font-bold flex justify-center items-center gap-2">
+                <Sparkles className="w-4 h-4"/>
+                Extract Contact Info
               </button>
             </div>
           </div>
