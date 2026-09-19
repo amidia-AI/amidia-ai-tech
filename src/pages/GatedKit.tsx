@@ -887,10 +887,12 @@ export function GatedKit() {
               <span>Direct Production Access</span>
             </div>
             <h3 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-              Ready to secure a campaign slot for {data.brandName}?
+              {data.brandName && data.brandName !== 'Partner Brand'
+                ? `Confirm your booking for ${data.brandName}?`
+                : 'Ready to secure a booking?'}
             </h3>
             <p className="text-xs sm:text-sm text-neutral-300 max-w-lg mx-auto leading-relaxed">
-              Reply directly to your personalized access email or reach out to initiate project scoping and lock in your target publishing date.
+              Confirm your booking below to initiate project scoping and lock in your target publishing date.
             </p>
           </div>
 
