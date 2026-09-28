@@ -10,9 +10,9 @@ import { extractContactInfo } from '../utils/extractContactInfo';
 import { createLineItem, defaultLineItems, lineItemTotal, legacyTokenToLineItems } from '../utils/lineItems';
 
 const DEFAULT_PRESETS: PricingPreset[] = [
-  { id: 'standard', name: 'Standard Rate', description: 'Default rates', expiryDays: '14', isCustom: false, lineItems: [createLineItem('dedicated', { price: 1200 }), createLineItem('shots', { price: 150, quantity: 5 }), createLineItem('integrated', { price: 600 }), createLineItem('adRead', { price: 400 })] },
-  { id: 'discounted', name: 'Discounted (15%)', description: 'For long term partners', expiryDays: '14', isCustom: false, lineItems: [createLineItem('dedicated', { price: 1020 }), createLineItem('shots', { price: 130, quantity: 5 }), createLineItem('integrated', { price: 510 }), createLineItem('adRead', { price: 340 })] },
-  { id: 'premium', name: 'Premium Rush', description: 'Fast turnaround', expiryDays: '7', isCustom: false, lineItems: [createLineItem('dedicated', { price: 1500 }), createLineItem('shots', { price: 180, quantity: 5 }), createLineItem('integrated', { price: 800 }), createLineItem('adRead', { price: 500 })] }
+  { id: 'standard', name: 'Standard Rate', description: 'Default rates', expiryDays: '14', isCustom: false, lineItems: [createLineItem('dedicated', { price: 1200 }), createLineItem('shots', { price: 100, quantity: 1 }), createLineItem('integrated', { price: 600 }), createLineItem('adRead', { price: 400 })] },
+  { id: 'discounted', name: 'Discounted (15%)', description: 'For long term partners', expiryDays: '14', isCustom: false, lineItems: [createLineItem('dedicated', { price: 1020 }), createLineItem('shots', { price: 100, quantity: 1 }), createLineItem('integrated', { price: 510 }), createLineItem('adRead', { price: 340 })] },
+  { id: 'premium', name: 'Premium Rush', description: 'Fast turnaround', expiryDays: '7', isCustom: false, lineItems: [createLineItem('dedicated', { price: 1500 }), createLineItem('shots', { price: 100, quantity: 1 }), createLineItem('integrated', { price: 800 }), createLineItem('adRead', { price: 500 })] }
 ];
 
 function formatMoneyShort(n: number): string {
@@ -77,11 +77,13 @@ export function Admin() {
           // Migrate legacy presets (flat dedicatedPrice/integratedPrice/commercialUsagePrice) to lineItems
           if (!Array.isArray(p.lineItems)) return { ...p, lineItems: legacyTokenToLineItems(p) };
           // Upgrade the built-in presets to the current 4-item shape (Dedicated, Shots, Integrated, Ad Read)
-          // if they were saved before Shots/Ad Read existed, without touching admin-customized presets.
+          // if they were saved before Shots/Ad Read existed, or if Shots still has its old 5x$150
+          // default instead of the current 1x$100, without touching admin-customized presets.
           const builtIn = defaultsById.get(p.id);
           const hasShots = p.lineItems.some((li: any) => li.key === 'shots');
           const hasAdRead = p.lineItems.some((li: any) => li.key === 'adRead');
-          if (builtIn && !p.isCustom && (!hasShots || !hasAdRead)) {
+          const staleShots = p.lineItems.some((li: any) => li.key === 'shots' && li.quantity === 5);
+          if (builtIn && !p.isCustom && (!hasShots || !hasAdRead || staleShots)) {
             return builtIn;
           }
           return p;

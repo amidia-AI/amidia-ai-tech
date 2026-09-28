@@ -41,8 +41,8 @@ export const LINE_ITEM_TEMPLATES: Record<Exclude<LineItemKey, 'custom'>, LineIte
     description: 'A bundle of short-form vertical videos (Reels, Shorts, TikTok-style cuts) featuring your product for fast, high-frequency visibility.',
     unitLabel: 'per video',
     badge: 'Short-Form',
-    defaultPrice: 150,
-    defaultQuantity: 5,
+    defaultPrice: 100,
+    defaultQuantity: 1,
   },
   adRead: {
     key: 'adRead',
