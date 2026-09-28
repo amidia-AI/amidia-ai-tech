@@ -540,12 +540,31 @@ export function GatedKit() {
                 >
                   <div className={`absolute -top-12 -right-12 w-28 h-28 ${theme.blob} rounded-full blur-2xl pointer-events-none`} />
                   <div className="space-y-3 relative z-10">
-                    <motion.div
-                      whileHover={{ scale: 1.05 }}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full ${theme.badgeBg} text-white text-[11px] font-bold uppercase tracking-wider shadow-xs`}
-                    >
-                      <span>{item.badge || 'Rate Card Item'}</span>
-                    </motion.div>
+                    <div className="flex items-center justify-between gap-2">
+                      <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full ${theme.badgeBg} text-white text-[11px] font-bold uppercase tracking-wider shadow-xs`}
+                      >
+                        <span>{item.badge || 'Rate Card Item'}</span>
+                      </motion.div>
+                      {item.key === 'shots' && (
+                        <div className="flex items-center gap-1.5">
+                          {SHORT_FORM_PLATFORM_LINKS.map(({ label, href, icon: Icon }) => (
+                            <a
+                              key={label}
+                              href={href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title={`View shots on ${label}`}
+                              aria-label={`View shots on ${label}`}
+                              className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-white/80 border border-neutral-200 text-neutral-700 hover:bg-white hover:border-neutral-300 hover:scale-110 transition-all"
+                            >
+                              <Icon className="w-3.5 h-3.5" />
+                            </a>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                     <h3 className="text-lg font-bold text-neutral-950">{item.label}</h3>
                     {item.description && (
                       <p className="text-xs text-neutral-600 leading-relaxed">{item.description}</p>
@@ -566,22 +585,6 @@ export function GatedKit() {
                         </motion.li>
                       ))}
                     </ul>
-                    {item.key === 'shots' && (
-                      <div className="flex items-center gap-2">
-                        {SHORT_FORM_PLATFORM_LINKS.map(({ label, href, icon: Icon }) => (
-                          <a
-                            key={label}
-                            href={href}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 rounded-lg bg-white/70 border border-neutral-200 text-[11px] font-semibold text-neutral-700 hover:bg-white hover:border-neutral-300 transition-colors"
-                          >
-                            <Icon className="w-3.5 h-3.5" />
-                            <span>{label}</span>
-                          </a>
-                        ))}
-                      </div>
-                    )}
                     <motion.a
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
