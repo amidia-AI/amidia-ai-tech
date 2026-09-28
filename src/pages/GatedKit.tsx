@@ -25,11 +25,13 @@ import {
   Check,
   X,
   Play,
+  Youtube,
+  Instagram,
 } from 'lucide-react';
 import { StudioScreenshot, VideoIdea, PricingLineItem } from '../types';
 import { ClientLogo } from '../components/ClientLogo';
 import { AgeGenderDemographics } from '../components/AgeGenderDemographics';
-import { fetchPublicVideos, YouTubeVideoItem } from '../services/youtube';
+import { fetchPublicVideos, YouTubeVideoItem, AMIDIA_CHANNEL_INFO } from '../services/youtube';
 import { appleEase, fadeInUp, staggerContainer, softSpring, springBounce, appleScale } from '../utils/motion';
 import { detectSponsorFromDescription } from '../utils/detectSponsor';
 import { legacyTokenToLineItems, lineItemTotal } from '../utils/lineItems';
@@ -54,6 +56,11 @@ interface GatedKitData {
     ctr: string;
   };
 }
+
+const SHORT_FORM_PLATFORM_LINKS = [
+  { label: 'YouTube', href: `https://www.youtube.com/${AMIDIA_CHANNEL_INFO.customUrl}`, icon: Youtube },
+  { label: 'Instagram', href: 'https://www.instagram.com/amidia.ai.tech/', icon: Instagram },
+];
 
 const RATE_CARD_THEMES = [
   { bgGrad: 'bg-gradient-to-b from-sky-50/70 via-sky-50/20 to-white', border: 'border-sky-300/90', hoverBorder: 'hover:border-sky-500', hoverShadow: 'hover:shadow-[0_16px_40px_rgba(2,132,199,0.14)]', blob: 'bg-sky-200/40', badgeBg: 'bg-sky-600', divider: 'border-sky-100', priceText: 'text-sky-950', unitText: 'text-sky-700/80', bullet: 'text-sky-600', btnBg: 'bg-sky-600 hover:bg-sky-700' },
@@ -559,6 +566,22 @@ export function GatedKit() {
                         </motion.li>
                       ))}
                     </ul>
+                    {item.key === 'shots' && (
+                      <div className="flex items-center gap-2">
+                        {SHORT_FORM_PLATFORM_LINKS.map(({ label, href, icon: Icon }) => (
+                          <a
+                            key={label}
+                            href={href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 rounded-lg bg-white/70 border border-neutral-200 text-[11px] font-semibold text-neutral-700 hover:bg-white hover:border-neutral-300 transition-colors"
+                          >
+                            <Icon className="w-3.5 h-3.5" />
+                            <span>{label}</span>
+                          </a>
+                        ))}
+                      </div>
+                    )}
                     <motion.a
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
