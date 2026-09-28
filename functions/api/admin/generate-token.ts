@@ -2,6 +2,30 @@ import { jsonResponse, readBody, stripHtml, randomHex } from '../../_shared/help
 import { requireAdmin } from '../../_shared/auth';
 import { kvSet, kvGet } from '../../_shared/kv';
 
+const VALID_LINE_ITEM_KEYS = ['dedicated', 'integrated', 'commercialUsage', 'shots', 'custom'];
+
+function sanitizeLineItems(input: any): any[] {
+  if (!Array.isArray(input)) return [];
+  return input.slice(0, 20).map((item: any, idx: number) => {
+    const price = Number(item?.price);
+    const quantity = item?.quantity !== undefined && item?.quantity !== null && item?.quantity !== ''
+      ? Math.max(1, Math.min(10000, Number(item.quantity) || 1))
+      : undefined;
+    const key = VALID_LINE_ITEM_KEYS.includes(item?.key) ? item.key : 'custom';
+    return {
+      id: stripHtml(String(item?.id || `item_${idx}_${Date.now()}`)).slice(0, 80),
+      key,
+      label: stripHtml(String(item?.label || 'Rate Card Item')).slice(0, 120),
+      description: stripHtml(String(item?.description || '')).slice(0, 500),
+      price: isNaN(price) ? 0 : Math.max(0, Math.min(100000, price)),
+      quantity,
+      unitLabel: stripHtml(String(item?.unitLabel || 'flat rate')).slice(0, 80),
+      badge: item?.badge ? stripHtml(String(item.badge)).slice(0, 40) : undefined,
+      enabled: item?.enabled !== false,
+    };
+  }).filter(item => item.label);
+}
+
 export const onRequestPost: PagesFunction = async (context) => {
   const auth = await requireAdmin(context.request, context.env);
   if (auth instanceof Response) return auth;
@@ -17,6 +41,7 @@ export const onRequestPost: PagesFunction = async (context) => {
       dedicatedPrice,
       integratedPrice,
       commercialUsagePrice,
+      lineItems,
     } = await readBody(context.request);
 
     if (!brandName && !company) {
@@ -46,6 +71,8 @@ export const onRequestPost: PagesFunction = async (context) => {
       ? Math.max(0, Math.min(20000, Number(commercialUsagePrice)))
       : 350;
 
+    const sanitizedLineItems = sanitizeLineItems(lineItems);
+
     const tokenDoc = {
       token,
       submissionId: submissionId || '',
@@ -58,6 +85,7 @@ export const onRequestPost: PagesFunction = async (context) => {
       dedicatedPrice: parsedDedicatedPrice,
       integratedPrice: parsedIntegratedPrice,
       commercialUsagePrice: parsedCommercialUsagePrice,
+      lineItems: sanitizedLineItems,
     };
 
     const kv = (context.env as any).APP_KV;
@@ -86,6 +114,7 @@ export const onRequestPost: PagesFunction = async (context) => {
       dedicatedPrice: parsedDedicatedPrice,
       integratedPrice: parsedIntegratedPrice,
       commercialUsagePrice: parsedCommercialUsagePrice,
+      lineItems: sanitizedLineItems,
     });
   } catch (err: any) {
     return jsonResponse({ error: err.message || 'Failed to generate token' }, 500);

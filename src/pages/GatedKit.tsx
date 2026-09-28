@@ -26,11 +26,13 @@ import {
   X,
   Play,
 } from 'lucide-react';
-import { StudioScreenshot, VideoIdea } from '../types';
+import { StudioScreenshot, VideoIdea, PricingLineItem } from '../types';
 import { ClientLogo } from '../components/ClientLogo';
 import { AgeGenderDemographics } from '../components/AgeGenderDemographics';
 import { fetchPublicVideos, YouTubeVideoItem } from '../services/youtube';
 import { appleEase, fadeInUp, staggerContainer, softSpring, springBounce, appleScale } from '../utils/motion';
+import { detectSponsorFromDescription } from '../utils/detectSponsor';
+import { legacyTokenToLineItems, lineItemTotal } from '../utils/lineItems';
 
 interface GatedKitData {
   brandName: string;
@@ -39,6 +41,7 @@ interface GatedKitData {
   expiresAt?: string;
   screenshots: StudioScreenshot[];
   videoIdeas?: VideoIdea[];
+  lineItems?: PricingLineItem[];
   rateCard: {
     dedicatedVideo: string;
     integratedSegment: string;
@@ -51,6 +54,43 @@ interface GatedKitData {
     ctr: string;
   };
 }
+
+const RATE_CARD_THEMES = [
+  { bgGrad: 'bg-gradient-to-b from-sky-50/70 via-sky-50/20 to-white', border: 'border-sky-300/90', hoverBorder: 'hover:border-sky-500', hoverShadow: 'hover:shadow-[0_16px_40px_rgba(2,132,199,0.14)]', blob: 'bg-sky-200/40', badgeBg: 'bg-sky-600', divider: 'border-sky-100', priceText: 'text-sky-950', unitText: 'text-sky-700/80', bullet: 'text-sky-600', btnBg: 'bg-sky-600 hover:bg-sky-700' },
+  { bgGrad: 'bg-gradient-to-b from-indigo-50/70 via-indigo-50/20 to-white', border: 'border-indigo-300/90', hoverBorder: 'hover:border-indigo-500', hoverShadow: 'hover:shadow-[0_16px_40px_rgba(99,102,241,0.14)]', blob: 'bg-indigo-200/40', badgeBg: 'bg-indigo-600', divider: 'border-indigo-100', priceText: 'text-indigo-950', unitText: 'text-indigo-700/80', bullet: 'text-indigo-600', btnBg: 'bg-indigo-600 hover:bg-indigo-700' },
+  { bgGrad: 'bg-gradient-to-b from-amber-50/70 via-amber-50/20 to-white', border: 'border-amber-300/90', hoverBorder: 'hover:border-amber-500', hoverShadow: 'hover:shadow-[0_16px_40px_rgba(245,158,11,0.14)]', blob: 'bg-amber-200/40', badgeBg: 'bg-amber-600', divider: 'border-amber-100', priceText: 'text-amber-950', unitText: 'text-amber-700/80', bullet: 'text-amber-600', btnBg: 'bg-amber-600 hover:bg-amber-700' },
+  { bgGrad: 'bg-gradient-to-b from-emerald-50/70 via-emerald-50/20 to-white', border: 'border-emerald-300/90', hoverBorder: 'hover:border-emerald-500', hoverShadow: 'hover:shadow-[0_16px_40px_rgba(16,185,129,0.14)]', blob: 'bg-emerald-200/40', badgeBg: 'bg-emerald-600', divider: 'border-emerald-100', priceText: 'text-emerald-950', unitText: 'text-emerald-700/80', bullet: 'text-emerald-600', btnBg: 'bg-emerald-600 hover:bg-emerald-700' },
+  { bgGrad: 'bg-gradient-to-b from-rose-50/70 via-rose-50/20 to-white', border: 'border-rose-300/90', hoverBorder: 'hover:border-rose-500', hoverShadow: 'hover:shadow-[0_16px_40px_rgba(244,63,94,0.14)]', blob: 'bg-rose-200/40', badgeBg: 'bg-rose-600', divider: 'border-rose-100', priceText: 'text-rose-950', unitText: 'text-rose-700/80', bullet: 'text-rose-600', btnBg: 'bg-rose-600 hover:bg-rose-700' },
+  { bgGrad: 'bg-gradient-to-b from-violet-50/70 via-violet-50/20 to-white', border: 'border-violet-300/90', hoverBorder: 'hover:border-violet-500', hoverShadow: 'hover:shadow-[0_16px_40px_rgba(139,92,246,0.14)]', blob: 'bg-violet-200/40', badgeBg: 'bg-violet-600', divider: 'border-violet-100', priceText: 'text-violet-950', unitText: 'text-violet-700/80', bullet: 'text-violet-600', btnBg: 'bg-violet-600 hover:bg-violet-700' },
+];
+
+const RATE_CARD_BULLETS: Record<string, string[]> = {
+  dedicated: [
+    'Full product installation & architecture walk-through',
+    'Pinned top comment + link in top 2 lines of description',
+    'Permanent indexation on Amidia channel',
+  ],
+  integrated: [
+    'Native transition matching video narrative',
+    'Dedicated CTA slide + custom referral coupon/link',
+    'Pinned comment with direct UTM parameters',
+  ],
+  commercialUsage: [
+    'Clean 4K raw video file delivery',
+    'No creator watermarks on raw cut',
+    'Meta / LinkedIn / X advertising permission',
+  ],
+  shots: [
+    'Vertical, algorithm-friendly cuts for Reels/Shorts/TikTok',
+    'Quick native product callout woven into each shot',
+    'Delivered ready-to-post, no extra editing needed',
+  ],
+  custom: [
+    'Scope and deliverables confirmed directly over email',
+    'Flexible turnaround based on campaign needs',
+    'Custom usage terms available on request',
+  ],
+};
 
 export const DEFAULT_VERIFIED_SCREENSHOTS: StudioScreenshot[] = [
   {
@@ -169,6 +209,7 @@ export function GatedKit() {
                 expiresAt: matched.expiresAt,
                 screenshots: localScreenshots.map((s: any) => ({ ...s, monthYear })),
                 videoIdeas: localIdeas,
+                lineItems: matched.lineItems && matched.lineItems.length > 0 ? matched.lineItems : legacyTokenToLineItems(matched),
                 rateCard: {
                   dedicatedVideo: `$${matched.dedicatedPrice || 1200}`,
                   integratedSegment: `$${matched.integratedPrice || 600}`,
@@ -208,6 +249,7 @@ export function GatedKit() {
                 expiresAt: matched.expiresAt,
                 screenshots: localScreenshots.map((s: any) => ({ ...s, monthYear })),
                 videoIdeas: localIdeas,
+                lineItems: matched.lineItems && matched.lineItems.length > 0 ? matched.lineItems : legacyTokenToLineItems(matched),
                 rateCard: {
                   dedicatedVideo: `$${matched.dedicatedPrice || 1200}`,
                   integratedSegment: `$${matched.integratedPrice || 600}`,
@@ -235,12 +277,9 @@ export function GatedKit() {
       try {
         const videoList = await fetchPublicVideos();
         if (videoList && videoList.length > 0) {
-          const found = videoList.filter(v => {
-            const desc = v.description.toLowerCase();
-            const title = v.title.toLowerCase();
-            const combined = desc + " " + title;
-            return combined.includes('topview') || combined.includes('coderabbit') || combined.includes('abacus');
-          });
+          const found = videoList.filter(
+            v => detectSponsorFromDescription(v.description, v.title).isSponsored
+          );
           setSponsorVideos(found);
         }
       } catch (err) {
@@ -293,6 +332,10 @@ export function GatedKit() {
       </div>
     );
   }
+
+  const resolvedLineItems: PricingLineItem[] = data.lineItems && data.lineItems.length > 0
+    ? data.lineItems.filter((li) => li.enabled !== false)
+    : legacyTokenToLineItems({});
 
   return (
     <div className="min-h-screen bg-[#fafafa] text-neutral-900 selection:bg-neutral-900 selection:text-white">
@@ -390,12 +433,8 @@ export function GatedKit() {
               className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-4"
             >
               {sponsorVideos.map((vid, idx) => {
-                let brandTag = '';
-                const combined = (vid.title + " " + vid.description).toLowerCase();
-                if (combined.includes('abacus')) brandTag = 'Abacus AI';
-                else if (combined.includes('coderabbit')) brandTag = 'CodeRabbit';
-                else if (combined.includes('topview')) brandTag = 'TopView AI';
-                
+                const { brandName: brandTag } = detectSponsorFromDescription(vid.description, vid.title);
+
                 return (
                   <motion.a
                     key={vid.id}
@@ -457,7 +496,7 @@ export function GatedKit() {
           />
         </section>
 
-        {/* Section 1: Exact Rate Card - Each card with distinct color identity */}
+        {/* Section 1: Exact Rate Card - dynamic, admin-editable line items */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold text-neutral-950 tracking-tight flex items-center gap-2.5">
@@ -474,162 +513,60 @@ export function GatedKit() {
             variants={staggerContainer}
             className="grid grid-cols-1 md:grid-cols-3 gap-5"
           >
-            {/* Rate 1: Dedicated Video (Azure Sky Accent Card) */}
-            <motion.div
-              variants={fadeInUp}
-              custom={0}
-              whileHover={{ y: -8, scale: 1.015 }}
-              transition={springBounce}
-              className="relative bg-gradient-to-b from-sky-50/70 via-sky-50/20 to-white border border-sky-300/90 rounded-3xl p-6 sm:p-7 flex flex-col justify-between hover:border-sky-500 hover:shadow-[0_16px_40px_rgba(2,132,199,0.14)] transition-all group overflow-hidden"
-            >
-              <div className="absolute -top-12 -right-12 w-28 h-28 bg-sky-200/40 rounded-full blur-2xl pointer-events-none" />
-              <div className="space-y-3 relative z-10">
+            {resolvedLineItems.map((item, idx) => {
+              const theme = RATE_CARD_THEMES[idx % RATE_CARD_THEMES.length];
+              const bullets = RATE_CARD_BULLETS[item.key] || RATE_CARD_BULLETS.custom;
+              const total = lineItemTotal(item);
+              return (
                 <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-600 text-white text-[11px] font-bold uppercase tracking-wider shadow-xs"
+                  key={item.id}
+                  variants={fadeInUp}
+                  custom={idx}
+                  whileHover={{ y: -8, scale: 1.015 }}
+                  transition={springBounce}
+                  className={`relative ${theme.bgGrad} border ${theme.border} rounded-3xl p-6 sm:p-7 flex flex-col justify-between ${theme.hoverBorder} ${theme.hoverShadow} transition-all group overflow-hidden`}
                 >
-                  <span>★</span>
-                  <span>Full Feature</span>
+                  <div className={`absolute -top-12 -right-12 w-28 h-28 ${theme.blob} rounded-full blur-2xl pointer-events-none`} />
+                  <div className="space-y-3 relative z-10">
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full ${theme.badgeBg} text-white text-[11px] font-bold uppercase tracking-wider shadow-xs`}
+                    >
+                      <span>{item.badge || 'Rate Card Item'}</span>
+                    </motion.div>
+                    <h3 className="text-lg font-bold text-neutral-950">{item.label}</h3>
+                    {item.description && (
+                      <p className="text-xs text-neutral-600 leading-relaxed">{item.description}</p>
+                    )}
+                    <div className={`pt-4 border-t ${theme.divider}`}>
+                      <div className={`text-3xl font-black ${theme.priceText} font-mono tracking-tight`}>${total.toLocaleString()}</div>
+                      <span className={`text-[11px] ${theme.unitText} font-medium`}>
+                        {item.quantity ? `${item.quantity} × $${item.price.toLocaleString()} (${item.unitLabel})` : item.unitLabel}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="space-y-4 pt-6 relative z-10">
+                    <ul className={`space-y-2.5 text-xs text-neutral-700 border-t ${theme.divider} pt-4`}>
+                      {bullets.map((bullet) => (
+                        <motion.li key={bullet} whileHover={{ x: 3 }} className="flex items-center gap-2 transition-transform">
+                          <CheckCircle2 className={`w-3.5 h-3.5 ${theme.bullet} shrink-0`} />
+                          <span>{bullet}</span>
+                        </motion.li>
+                      ))}
+                    </ul>
+                    <motion.a
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      href={`mailto:sajid@amidia.in?subject=Amidia%20Booking%20—%20${encodeURIComponent(item.label)}%20(${encodeURIComponent(data.brandName)})`}
+                      className={`w-full py-2.5 px-4 rounded-xl ${theme.btnBg} text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer group/btn`}
+                    >
+                      <span>Inquire for {item.label}</span>
+                      <ChevronRight className="w-3.5 h-3.5 group-hover/btn:translate-x-1 transition-transform" />
+                    </motion.a>
+                  </div>
                 </motion.div>
-                <h3 className="text-lg font-bold text-neutral-950">Dedicated Deep-Dive Video</h3>
-                <p className="text-xs text-neutral-600 leading-relaxed">
-                  A standalone 10–18 minute comprehensive build or review focusing 100% on your developer tool, SDK, or AI workflow.
-                </p>
-                <div className="pt-4 border-t border-sky-100">
-                  <div className="text-3xl font-black text-sky-950 font-mono tracking-tight">{data.rateCard.dedicatedVideo}</div>
-                  <span className="text-[11px] text-sky-700/80 font-medium">flat rate per produced video</span>
-                </div>
-              </div>
-              <div className="space-y-4 pt-6 relative z-10">
-                <ul className="space-y-2.5 text-xs text-neutral-700 border-t border-sky-100 pt-4">
-                  <motion.li whileHover={{ x: 3 }} className="flex items-center gap-2 transition-transform">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-sky-600 shrink-0" />
-                    <span>Full product installation &amp; architecture walk-through</span>
-                  </motion.li>
-                  <motion.li whileHover={{ x: 3 }} className="flex items-center gap-2 transition-transform">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-sky-600 shrink-0" />
-                    <span>Pinned top comment + link in top 2 lines of description</span>
-                  </motion.li>
-                  <motion.li whileHover={{ x: 3 }} className="flex items-center gap-2 transition-transform">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-sky-600 shrink-0" />
-                    <span>Permanent indexation on Amidia channel</span>
-                  </motion.li>
-                </ul>
-                <motion.a
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  href={`mailto:sajid@amidia.in?subject=Amidia%20Booking%20—%20Dedicated%20Video%20(${encodeURIComponent(data.brandName)})`}
-                  className="w-full py-2.5 px-4 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer group/btn"
-                >
-                  <span>Inquire for Dedicated Video</span>
-                  <ChevronRight className="w-3.5 h-3.5 group-hover/btn:translate-x-1 transition-transform" />
-                </motion.a>
-              </div>
-            </motion.div>
-
-            {/* Rate 2: Integrated Segment (Royal Indigo / Violet Card) */}
-            <motion.div
-              variants={fadeInUp}
-              custom={1}
-              whileHover={{ y: -8, scale: 1.015 }}
-              transition={springBounce}
-              className="relative bg-gradient-to-b from-indigo-50/70 via-indigo-50/20 to-white border border-indigo-300/90 rounded-3xl p-6 sm:p-7 flex flex-col justify-between hover:border-indigo-500 hover:shadow-[0_16px_40px_rgba(99,102,241,0.14)] transition-all group overflow-hidden"
-            >
-              <div className="absolute -top-12 -right-12 w-28 h-28 bg-indigo-200/40 rounded-full blur-2xl pointer-events-none" />
-              <div className="space-y-3 relative z-10">
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-600 text-white text-[11px] font-bold uppercase tracking-wider shadow-xs"
-                >
-                  <span>High Impact</span>
-                </motion.div>
-                <h3 className="text-lg font-bold text-neutral-950">Integrated Segment (60–90s)</h3>
-                <p className="text-xs text-neutral-600 leading-relaxed">
-                  A seamless mid-roll or organic problem-solving showcase embedded directly into a major architectural tutorial.
-                </p>
-                <div className="pt-4 border-t border-indigo-100">
-                  <div className="text-3xl font-black text-indigo-950 font-mono tracking-tight">{data.rateCard.integratedSegment}</div>
-                  <span className="text-[11px] text-indigo-700/80 font-medium">flat rate per segment placement</span>
-                </div>
-              </div>
-              <div className="space-y-4 pt-6 relative z-10">
-                <ul className="space-y-2.5 text-xs text-neutral-700 border-t border-indigo-100 pt-4">
-                  <motion.li whileHover={{ x: 3 }} className="flex items-center gap-2 transition-transform">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                    <span>Native transition matching video narrative</span>
-                  </motion.li>
-                  <motion.li whileHover={{ x: 3 }} className="flex items-center gap-2 transition-transform">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                    <span>Dedicated CTA slide + custom referral coupon/link</span>
-                  </motion.li>
-                  <motion.li whileHover={{ x: 3 }} className="flex items-center gap-2 transition-transform">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                    <span>Pinned comment with direct UTM parameters</span>
-                  </motion.li>
-                </ul>
-                <motion.a
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  href={`mailto:sajid@amidia.in?subject=Amidia%20Booking%20—%20Integrated%20Segment%20(${encodeURIComponent(data.brandName)})`}
-                  className="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer group/btn"
-                >
-                  <span>Inquire for Integrated Segment</span>
-                  <ChevronRight className="w-3.5 h-3.5 group-hover/btn:translate-x-1 transition-transform" />
-                </motion.a>
-              </div>
-            </motion.div>
-
-            {/* Rate 3: Commercial Usage Rights (Warm Amber Card) */}
-            <motion.div
-              variants={fadeInUp}
-              custom={2}
-              whileHover={{ y: -8, scale: 1.015 }}
-              transition={springBounce}
-              className="relative bg-gradient-to-b from-amber-50/70 via-amber-50/20 to-white border border-amber-300/90 rounded-3xl p-6 sm:p-7 flex flex-col justify-between hover:border-amber-500 hover:shadow-[0_16px_40px_rgba(245,158,11,0.14)] transition-all group overflow-hidden"
-            >
-              <div className="absolute -top-12 -right-12 w-28 h-28 bg-amber-200/40 rounded-full blur-2xl pointer-events-none" />
-              <div className="space-y-3 relative z-10">
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-600 text-white text-[11px] font-bold uppercase tracking-wider shadow-xs"
-                >
-                  <span>Add-On</span>
-                </motion.div>
-                <h3 className="text-lg font-bold text-neutral-950">Commercial Usage Rights</h3>
-                <p className="text-xs text-neutral-600 leading-relaxed">
-                  60-day paid advertising &amp; whitelisting rights to cut, run, and repurpose video segments on your brand social channels and landing pages.
-                </p>
-                <div className="pt-4 border-t border-amber-100">
-                  <div className="text-3xl font-black text-amber-950 font-mono tracking-tight">{data.rateCard.commercialUsageRights60Day}</div>
-                  <span className="text-[11px] text-amber-750 font-medium">add-on license</span>
-                </div>
-              </div>
-              <div className="space-y-4 pt-6 relative z-10">
-                <ul className="space-y-2.5 text-xs text-neutral-700 border-t border-amber-100 pt-4">
-                  <motion.li whileHover={{ x: 3 }} className="flex items-center gap-2 transition-transform">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                    <span>Clean 4K raw video file delivery</span>
-                  </motion.li>
-                  <motion.li whileHover={{ x: 3 }} className="flex items-center gap-2 transition-transform">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                    <span>No creator watermarks on raw cut</span>
-                  </motion.li>
-                  <motion.li whileHover={{ x: 3 }} className="flex items-center gap-2 transition-transform">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                    <span>Meta / LinkedIn / X advertising permission</span>
-                  </motion.li>
-                </ul>
-                <motion.a
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  href={`mailto:sajid@amidia.in?subject=Amidia%20Booking%20—%20Commercial%20Usage%20Rights%20(${encodeURIComponent(data.brandName)})`}
-                  className="w-full py-2.5 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer group/btn"
-                >
-                  <span>Add Usage Rights</span>
-                  <ChevronRight className="w-3.5 h-3.5 group-hover/btn:translate-x-1 transition-transform" />
-                </motion.a>
-              </div>
-            </motion.div>
+              );
+            })}
           </motion.div>
         </section>
 

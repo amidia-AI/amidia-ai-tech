@@ -46,6 +46,21 @@ export interface KitToken {
   dedicatedPrice?: number | string;
   integratedPrice?: number | string;
   commercialUsagePrice?: number | string;
+  lineItems?: PricingLineItem[];
+}
+
+export type LineItemKey = 'dedicated' | 'integrated' | 'commercialUsage' | 'shots' | 'custom';
+
+export interface PricingLineItem {
+  id: string;
+  key: LineItemKey;
+  label: string;
+  description: string;
+  price: number;
+  quantity?: number;
+  unitLabel: string;
+  badge?: string;
+  enabled: boolean;
 }
 
 export interface StudioScreenshot {
@@ -80,9 +95,7 @@ export interface PricingPreset {
   id: string;
   name: string;
   description?: string;
-  dedicatedPrice: number;
-  integratedPrice: number;
-  commercialUsagePrice: number;
+  lineItems: PricingLineItem[];
   expiryDays: string;
   isCustom?: boolean;
 }

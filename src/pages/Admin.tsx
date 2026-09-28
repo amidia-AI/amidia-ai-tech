@@ -5,14 +5,19 @@ import {
   EyeOff, Filter, Sparkles, Lock, Shield, LogOut, Key, AlertCircle, BookmarkCheck, CheckCircle2 
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { KitSubmission, KitToken, StudioScreenshot, KitViewLog, PricingPreset, VideoIdea } from '../types';
+import { KitSubmission, KitToken, StudioScreenshot, KitViewLog, PricingPreset, PricingLineItem, LineItemKey, VideoIdea } from '../types';
 import { extractContactInfo } from '../utils/extractContactInfo';
+import { createLineItem, defaultLineItems, lineItemTotal, legacyTokenToLineItems } from '../utils/lineItems';
 
 const DEFAULT_PRESETS: PricingPreset[] = [
-  { id: 'standard', name: 'Standard Rate', description: 'Default rates', dedicatedPrice: 1200, integratedPrice: 600, commercialUsagePrice: 350, expiryDays: '14', isCustom: false },
-  { id: 'discounted', name: 'Discounted (15%)', description: 'For long term partners', dedicatedPrice: 1020, integratedPrice: 510, commercialUsagePrice: 350, expiryDays: '14', isCustom: false },
-  { id: 'premium', name: 'Premium Rush', description: 'Fast turnaround', dedicatedPrice: 1500, integratedPrice: 800, commercialUsagePrice: 500, expiryDays: '7', isCustom: false }
+  { id: 'standard', name: 'Standard Rate', description: 'Default rates', expiryDays: '14', isCustom: false, lineItems: [createLineItem('dedicated', { price: 1200 }), createLineItem('integrated', { price: 600 }), createLineItem('commercialUsage', { price: 350 })] },
+  { id: 'discounted', name: 'Discounted (15%)', description: 'For long term partners', expiryDays: '14', isCustom: false, lineItems: [createLineItem('dedicated', { price: 1020 }), createLineItem('integrated', { price: 510 }), createLineItem('commercialUsage', { price: 350 })] },
+  { id: 'premium', name: 'Premium Rush', description: 'Fast turnaround', expiryDays: '7', isCustom: false, lineItems: [createLineItem('dedicated', { price: 1500 }), createLineItem('integrated', { price: 800 }), createLineItem('commercialUsage', { price: 500 })] }
 ];
+
+function formatMoneyShort(n: number): string {
+  return n >= 1000 ? `${(n / 1000).toFixed(n % 1000 === 0 ? 0 : 1)}k` : String(n);
+}
 
 export function Admin() {
   const {
@@ -59,15 +64,19 @@ export function Admin() {
   const [modalEmail, setModalEmail] = useState('');
   const [modalExpiryDays, setModalExpiryDays] = useState('14');
   const [modalCustomDate, setModalCustomDate] = useState('');
-  const [modalDedicatedPrice, setModalDedicatedPrice] = useState<number>(1200);
-  const [modalIntegratedPrice, setModalIntegratedPrice] = useState<number>(600);
-  const [modalCommercialUsagePrice, setModalCommercialUsagePrice] = useState<number>(350);
+  const [modalLineItems, setModalLineItems] = useState<PricingLineItem[]>(() => defaultLineItems());
 
   // Presets State
   const [presets, setPresets] = useState<PricingPreset[]>(() => {
     try {
       const saved = localStorage.getItem('amidia_pricing_presets');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Migrate legacy presets (flat dedicatedPrice/integratedPrice/commercialUsagePrice) to lineItems
+        return parsed.map((p: any) =>
+          Array.isArray(p.lineItems) ? p : { ...p, lineItems: legacyTokenToLineItems(p) }
+        );
+      }
     } catch(e){}
     return DEFAULT_PRESETS;
   });
@@ -166,10 +175,10 @@ export function Admin() {
   const handleOpenPresetModal = (preset?: PricingPreset) => {
     if (preset) {
       setEditingPresetId(preset.id);
-      setPresetDraft(preset);
+      setPresetDraft({ ...preset, lineItems: preset.lineItems.map(li => ({ ...li })) });
     } else {
       setEditingPresetId(null);
-      setPresetDraft({ name: '', dedicatedPrice: 1000, integratedPrice: 500, commercialUsagePrice: 350, expiryDays: '14' });
+      setPresetDraft({ name: '', expiryDays: '14', lineItems: defaultLineItems() });
     }
     setShowPresetModal(true);
   };
@@ -179,18 +188,17 @@ export function Admin() {
     if (!presetDraft.name?.trim()) return;
     let updated = [...presets];
     let appliedPreset: PricingPreset;
-    
+    const lineItems = presetDraft.lineItems && presetDraft.lineItems.length > 0 ? presetDraft.lineItems : defaultLineItems();
+
     if (editingPresetId) {
-      updated = updated.map(p => p.id === editingPresetId ? { ...p, ...presetDraft, description: 'Custom preset' } as PricingPreset : p);
+      updated = updated.map(p => p.id === editingPresetId ? { ...p, ...presetDraft, lineItems, description: 'Custom preset' } as PricingPreset : p);
       appliedPreset = updated.find(p => p.id === editingPresetId)!;
     } else {
       appliedPreset = {
         id: 'preset_' + Date.now(),
         name: presetDraft.name.trim(),
         description: 'Custom preset',
-        dedicatedPrice: presetDraft.dedicatedPrice || 0,
-        integratedPrice: presetDraft.integratedPrice || 0,
-        commercialUsagePrice: presetDraft.commercialUsagePrice || 0,
+        lineItems,
         expiryDays: presetDraft.expiryDays || '14',
         isCustom: true
       };
@@ -212,9 +220,7 @@ export function Admin() {
     if (activePresetId === id && updated.length > 0) applyPreset(updated[0]);
     else if (activePresetId === id) {
       setActivePresetId(null);
-      setModalDedicatedPrice(0);
-      setModalIntegratedPrice(0);
-      setModalCommercialUsagePrice(0);
+      setModalLineItems([]);
       setModalExpiryDays('14');
     }
     try {
@@ -224,10 +230,31 @@ export function Admin() {
 
   const applyPreset = (preset: PricingPreset) => {
     setActivePresetId(preset.id);
-    setModalDedicatedPrice(preset.dedicatedPrice);
-    setModalIntegratedPrice(preset.integratedPrice);
-    setModalCommercialUsagePrice(preset.commercialUsagePrice);
+    setModalLineItems(preset.lineItems.map(li => ({ ...li })));
     setModalExpiryDays(preset.expiryDays);
+  };
+
+  const updatePresetDraftLineItem = (id: string, patch: Partial<PricingLineItem>) => {
+    setPresetDraft(prev => ({ ...prev, lineItems: (prev.lineItems || []).map(li => li.id === id ? { ...li, ...patch } : li) }));
+  };
+  const removePresetDraftLineItem = (id: string) => {
+    setPresetDraft(prev => ({ ...prev, lineItems: (prev.lineItems || []).filter(li => li.id !== id) }));
+  };
+  const addPresetDraftLineItem = (key: LineItemKey) => {
+    setPresetDraft(prev => ({ ...prev, lineItems: [...(prev.lineItems || []), createLineItem(key)] }));
+  };
+
+  const updateModalLineItem = (id: string, patch: Partial<PricingLineItem>) => {
+    setModalLineItems(prev => prev.map(li => li.id === id ? { ...li, ...patch } : li));
+    setActivePresetId(null);
+  };
+  const removeModalLineItem = (id: string) => {
+    setModalLineItems(prev => prev.filter(li => li.id !== id));
+    setActivePresetId(null);
+  };
+  const addModalLineItem = (key: LineItemKey) => {
+    setModalLineItems(prev => [...prev, createLineItem(key)]);
+    setActivePresetId(null);
   };
 
   const handleGenerateToken = async (e: React.FormEvent) => {
@@ -247,9 +274,7 @@ export function Admin() {
           email: modalEmail,
           expiryDays: modalExpiryDays === 'custom' ? undefined : modalExpiryDays,
           customExpiryDate: modalExpiryDays === 'custom' ? modalCustomDate : undefined,
-          dedicatedPrice: modalDedicatedPrice,
-          integratedPrice: modalIntegratedPrice,
-          commercialUsagePrice: modalCommercialUsagePrice
+          lineItems: modalLineItems
         })
       });
       const data = await res.json();
@@ -526,25 +551,32 @@ export function Admin() {
                 <label className="text-xs font-bold text-neutral-700">Preset Name</label>
                 <input required type="text" value={presetDraft.name || ''} onChange={e => setPresetDraft({...presetDraft, name: e.target.value})} className="w-full mt-1 px-3 py-2 border rounded-xl" />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-bold text-neutral-700">Dedicated Price ($)</label>
-                  <input required type="number" value={presetDraft.dedicatedPrice || 0} onChange={e => setPresetDraft({...presetDraft, dedicatedPrice: Number(e.target.value)})} className="w-full mt-1 px-3 py-2 border rounded-xl" />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-neutral-700">Integrated Price ($)</label>
-                  <input required type="number" value={presetDraft.integratedPrice || 0} onChange={e => setPresetDraft({...presetDraft, integratedPrice: Number(e.target.value)})} className="w-full mt-1 px-3 py-2 border rounded-xl" />
+              <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                <label className="text-xs font-bold text-neutral-700">Rate Card Items</label>
+                {(presetDraft.lineItems || []).map(li => (
+                  <div key={li.id} className={`p-2.5 border rounded-xl space-y-2 ${li.enabled ? 'border-neutral-200 bg-white' : 'border-neutral-100 bg-neutral-50 opacity-60'}`}>
+                    <div className="flex items-center gap-2">
+                      <input type="checkbox" checked={li.enabled} onChange={e => updatePresetDraftLineItem(li.id, { enabled: e.target.checked })} title="Include in rate card" />
+                      <input type="text" value={li.label} onChange={e => updatePresetDraftLineItem(li.id, { label: e.target.value })} className="flex-1 px-2 py-1 border rounded-lg text-xs font-semibold" placeholder="Item name" />
+                      <button type="button" onClick={() => removePresetDraftLineItem(li.id)} className="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600" title="Remove item"><Trash2 className="w-3.5 h-3.5" /></button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <input type="number" value={li.price} onChange={e => updatePresetDraftLineItem(li.id, { price: Number(e.target.value) })} className="px-2 py-1 border rounded-lg text-xs" placeholder="Price ($)" />
+                      <input type="number" min={1} value={li.quantity ?? ''} onChange={e => updatePresetDraftLineItem(li.id, { quantity: e.target.value === '' ? undefined : Number(e.target.value) })} className="px-2 py-1 border rounded-lg text-xs" placeholder="Quantity (e.g. # of shots)" />
+                    </div>
+                  </div>
+                ))}
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  <button type="button" onClick={() => addPresetDraftLineItem('dedicated')} className="text-[10px] px-2 py-1 bg-sky-50 text-sky-700 rounded-lg font-bold hover:bg-sky-100">+ Dedicated</button>
+                  <button type="button" onClick={() => addPresetDraftLineItem('integrated')} className="text-[10px] px-2 py-1 bg-indigo-50 text-indigo-700 rounded-lg font-bold hover:bg-indigo-100">+ Integrated</button>
+                  <button type="button" onClick={() => addPresetDraftLineItem('commercialUsage')} className="text-[10px] px-2 py-1 bg-amber-50 text-amber-700 rounded-lg font-bold hover:bg-amber-100">+ Commercial</button>
+                  <button type="button" onClick={() => addPresetDraftLineItem('shots')} className="text-[10px] px-2 py-1 bg-emerald-50 text-emerald-700 rounded-lg font-bold hover:bg-emerald-100">+ Shots</button>
+                  <button type="button" onClick={() => addPresetDraftLineItem('custom')} className="text-[10px] px-2 py-1 bg-neutral-100 text-neutral-700 rounded-lg font-bold hover:bg-neutral-200">+ Custom</button>
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-bold text-neutral-700">Add-on Price ($)</label>
-                  <input required type="number" value={presetDraft.commercialUsagePrice || 0} onChange={e => setPresetDraft({...presetDraft, commercialUsagePrice: Number(e.target.value)})} className="w-full mt-1 px-3 py-2 border rounded-xl" />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-neutral-700">Expiry (Days)</label>
-                  <input required type="number" value={presetDraft.expiryDays || '14'} onChange={e => setPresetDraft({...presetDraft, expiryDays: e.target.value})} className="w-full mt-1 px-3 py-2 border rounded-xl" />
-                </div>
+              <div>
+                <label className="text-xs font-bold text-neutral-700">Expiry (Days)</label>
+                <input required type="number" value={presetDraft.expiryDays || '14'} onChange={e => setPresetDraft({...presetDraft, expiryDays: e.target.value})} className="w-full mt-1 px-3 py-2 border rounded-xl" />
               </div>
               <button type="submit" className="w-full py-3 bg-neutral-950 text-white rounded-xl font-bold hover:bg-neutral-800">
                 Save Preset
@@ -720,8 +752,10 @@ export function Admin() {
                               )}
                             </div>
 
-                            <div className={`text-[11px] font-mono font-medium ${isSelected ? 'text-neutral-300' : 'text-neutral-600'}`}>
-                              ${p.dedicatedPrice >= 1000 ? `${(p.dedicatedPrice / 1000).toFixed(p.dedicatedPrice % 1000 === 0 ? 0 : 1)}k` : p.dedicatedPrice} <span className="text-[10px] opacity-70">Ded</span> • ${p.integratedPrice >= 1000 ? `${(p.integratedPrice / 1000).toFixed(p.integratedPrice % 1000 === 0 ? 0 : 1)}k` : p.integratedPrice} <span className="text-[10px] opacity-70">Int</span>
+                            <div className={`text-[11px] font-mono font-medium truncate ${isSelected ? 'text-neutral-300' : 'text-neutral-600'}`}>
+                              {p.lineItems.filter(li => li.enabled).length > 0
+                                ? p.lineItems.filter(li => li.enabled).map(li => `$${formatMoneyShort(lineItemTotal(li))} ${li.label.split(' ')[0]}`).join(' • ')
+                                : 'No items enabled'}
                             </div>
                           </div>
 
@@ -765,6 +799,38 @@ export function Admin() {
                         </div>
                       );
                     })}
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-neutral-100 space-y-2">
+                  <div>
+                    <span className="text-xs font-bold text-neutral-950 uppercase tracking-wider">Rate Card For This Token (Editable)</span>
+                    <p className="text-[11px] text-neutral-500 mt-0.5">Fine-tune, remove, or add items (e.g. Shots) just for this sponsor link. Unchecked items are hidden from the kit.</p>
+                  </div>
+                  <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                    {modalLineItems.map(li => (
+                      <div key={li.id} className={`p-2.5 border rounded-xl space-y-2 ${li.enabled ? 'border-neutral-200 bg-white' : 'border-neutral-100 bg-neutral-50 opacity-60'}`}>
+                        <div className="flex items-center gap-2">
+                          <input type="checkbox" checked={li.enabled} onChange={e => updateModalLineItem(li.id, { enabled: e.target.checked })} title="Include in rate card" />
+                          <input type="text" value={li.label} onChange={e => updateModalLineItem(li.id, { label: e.target.value })} className="flex-1 px-2 py-1 border rounded-lg text-xs font-semibold" placeholder="Item name" />
+                          <button type="button" onClick={() => removeModalLineItem(li.id)} className="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600" title="Remove item"><Trash2 className="w-3.5 h-3.5" /></button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <input type="number" value={li.price} onChange={e => updateModalLineItem(li.id, { price: Number(e.target.value) })} className="px-2 py-1 border rounded-lg text-xs" placeholder="Price ($)" />
+                          <input type="number" min={1} value={li.quantity ?? ''} onChange={e => updateModalLineItem(li.id, { quantity: e.target.value === '' ? undefined : Number(e.target.value) })} className="px-2 py-1 border rounded-lg text-xs" placeholder="Quantity (e.g. # of shots)" />
+                        </div>
+                      </div>
+                    ))}
+                    {modalLineItems.length === 0 && (
+                      <p className="text-[11px] text-neutral-400 italic">No rate card items. Add one below.</p>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    <button type="button" onClick={() => addModalLineItem('dedicated')} className="text-[10px] px-2 py-1 bg-sky-50 text-sky-700 rounded-lg font-bold hover:bg-sky-100">+ Dedicated</button>
+                    <button type="button" onClick={() => addModalLineItem('integrated')} className="text-[10px] px-2 py-1 bg-indigo-50 text-indigo-700 rounded-lg font-bold hover:bg-indigo-100">+ Integrated</button>
+                    <button type="button" onClick={() => addModalLineItem('commercialUsage')} className="text-[10px] px-2 py-1 bg-amber-50 text-amber-700 rounded-lg font-bold hover:bg-amber-100">+ Commercial</button>
+                    <button type="button" onClick={() => addModalLineItem('shots')} className="text-[10px] px-2 py-1 bg-emerald-50 text-emerald-700 rounded-lg font-bold hover:bg-emerald-100">+ Shots</button>
+                    <button type="button" onClick={() => addModalLineItem('custom')} className="text-[10px] px-2 py-1 bg-neutral-100 text-neutral-700 rounded-lg font-bold hover:bg-neutral-200">+ Custom</button>
                   </div>
                 </div>
 
@@ -870,17 +936,11 @@ export function Admin() {
                               {tok.expiresAt ? new Date(tok.expiresAt).toLocaleDateString() : 'Never'}
                             </span>
                             <span>•</span>
-                            <span className="font-mono font-medium text-neutral-800 bg-neutral-100 px-1.5 py-0.5 rounded text-[10px] border border-neutral-200">
-                              Dedicated: ${tok.dedicatedPrice || 1200}
-                            </span>
-                            <span className="font-mono font-medium text-neutral-800 bg-neutral-100 px-1.5 py-0.5 rounded text-[10px] border border-neutral-200">
-                              Integrated: ${tok.integratedPrice || 600}
-                            </span>
-                            {tok.commercialUsagePrice !== undefined && (
-                              <span className="font-mono font-medium text-neutral-600 bg-neutral-100/70 px-1.5 py-0.5 rounded text-[10px]">
-                                Add-on: +${tok.commercialUsagePrice}
+                            {(tok.lineItems && tok.lineItems.length > 0 ? tok.lineItems : legacyTokenToLineItems(tok)).filter(li => li.enabled).map(li => (
+                              <span key={li.id} className="font-mono font-medium text-neutral-800 bg-neutral-100 px-1.5 py-0.5 rounded text-[10px] border border-neutral-200">
+                                {li.label}: ${lineItemTotal(li)}
                               </span>
-                            )}
+                            ))}
                             {tok.email && (
                               <>
                                 <span>•</span>
