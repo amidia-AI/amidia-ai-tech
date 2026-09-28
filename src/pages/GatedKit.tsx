@@ -557,7 +557,7 @@ export function GatedKit() {
                               rel="noopener noreferrer"
                               title={`View shots on ${label}`}
                               aria-label={`View shots on ${label}`}
-                              className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-white/80 border border-neutral-200 text-neutral-700 hover:bg-white hover:border-neutral-300 hover:scale-110 transition-all"
+                              className={`inline-flex items-center justify-center w-7 h-7 rounded-full bg-white/80 border border-neutral-200 hover:bg-white hover:border-neutral-300 hover:scale-110 transition-all ${label === 'YouTube' ? 'text-red-600' : 'text-pink-600'}`}
                             >
                               <Icon className="w-3.5 h-3.5" />
                             </a>
