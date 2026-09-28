@@ -37,9 +37,9 @@ export const LINE_ITEM_TEMPLATES: Record<Exclude<LineItemKey, 'custom'>, LineIte
   },
   shots: {
     key: 'shots',
-    label: 'Shots Package',
-    description: 'A bundle of short-form vertical shots/clips (Reels, Shorts, TikTok-style cuts) featuring your product for fast, high-frequency visibility.',
-    unitLabel: 'per shot',
+    label: 'Short Form Content',
+    description: 'A bundle of short-form vertical videos (Reels, Shorts, TikTok-style cuts) featuring your product for fast, high-frequency visibility.',
+    unitLabel: 'per video',
     badge: 'Short-Form',
     defaultPrice: 150,
     defaultQuantity: 5,

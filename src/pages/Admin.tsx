@@ -572,13 +572,13 @@ export function Admin() {
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <input type="number" value={li.price} onChange={e => updatePresetDraftLineItem(li.id, { price: Number(e.target.value) })} className="px-2 py-1 border rounded-lg text-xs" placeholder="Price ($)" />
-                      <input type="number" min={1} value={li.quantity ?? ''} onChange={e => updatePresetDraftLineItem(li.id, { quantity: e.target.value === '' ? undefined : Number(e.target.value) })} className="px-2 py-1 border rounded-lg text-xs" placeholder="Quantity (e.g. # of shots)" />
+                      <input type="number" min={1} value={li.quantity ?? ''} onChange={e => updatePresetDraftLineItem(li.id, { quantity: e.target.value === '' ? undefined : Number(e.target.value) })} className="px-2 py-1 border rounded-lg text-xs" placeholder="Quantity (e.g. # of videos)" />
                     </div>
                   </div>
                 ))}
                 <div className="flex flex-wrap gap-1.5 pt-1">
                   <button type="button" onClick={() => addPresetDraftLineItem('dedicated')} className="text-[10px] px-2 py-1 bg-sky-50 text-sky-700 rounded-lg font-bold hover:bg-sky-100">+ Dedicated</button>
-                  <button type="button" onClick={() => addPresetDraftLineItem('shots')} className="text-[10px] px-2 py-1 bg-emerald-50 text-emerald-700 rounded-lg font-bold hover:bg-emerald-100">+ Shots</button>
+                  <button type="button" onClick={() => addPresetDraftLineItem('shots')} className="text-[10px] px-2 py-1 bg-emerald-50 text-emerald-700 rounded-lg font-bold hover:bg-emerald-100">+ Short Form Content</button>
                   <button type="button" onClick={() => addPresetDraftLineItem('integrated')} className="text-[10px] px-2 py-1 bg-indigo-50 text-indigo-700 rounded-lg font-bold hover:bg-indigo-100">+ Integrated</button>
                   <button type="button" onClick={() => addPresetDraftLineItem('adRead')} className="text-[10px] px-2 py-1 bg-rose-50 text-rose-700 rounded-lg font-bold hover:bg-rose-100">+ Ad Read</button>
                   <button type="button" onClick={() => addPresetDraftLineItem('commercialUsage')} className="text-[10px] px-2 py-1 bg-amber-50 text-amber-700 rounded-lg font-bold hover:bg-amber-100">+ Commercial</button>
@@ -816,7 +816,7 @@ export function Admin() {
                 <div className="pt-3 border-t border-neutral-100 space-y-2">
                   <div>
                     <span className="text-xs font-bold text-neutral-950 uppercase tracking-wider">Rate Card For This Token (Editable)</span>
-                    <p className="text-[11px] text-neutral-500 mt-0.5">Fine-tune, remove, or add items (e.g. Shots) just for this sponsor link. Unchecked items are hidden from the kit.</p>
+                    <p className="text-[11px] text-neutral-500 mt-0.5">Fine-tune, remove, or add items (e.g. Short Form Content) just for this sponsor link. Unchecked items are hidden from the kit.</p>
                   </div>
                   <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
                     {modalLineItems.map(li => (
@@ -828,7 +828,7 @@ export function Admin() {
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <input type="number" value={li.price} onChange={e => updateModalLineItem(li.id, { price: Number(e.target.value) })} className="px-2 py-1 border rounded-lg text-xs" placeholder="Price ($)" />
-                          <input type="number" min={1} value={li.quantity ?? ''} onChange={e => updateModalLineItem(li.id, { quantity: e.target.value === '' ? undefined : Number(e.target.value) })} className="px-2 py-1 border rounded-lg text-xs" placeholder="Quantity (e.g. # of shots)" />
+                          <input type="number" min={1} value={li.quantity ?? ''} onChange={e => updateModalLineItem(li.id, { quantity: e.target.value === '' ? undefined : Number(e.target.value) })} className="px-2 py-1 border rounded-lg text-xs" placeholder="Quantity (e.g. # of videos)" />
                         </div>
                       </div>
                     ))}
@@ -838,7 +838,7 @@ export function Admin() {
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     <button type="button" onClick={() => addModalLineItem('dedicated')} className="text-[10px] px-2 py-1 bg-sky-50 text-sky-700 rounded-lg font-bold hover:bg-sky-100">+ Dedicated</button>
-                    <button type="button" onClick={() => addModalLineItem('shots')} className="text-[10px] px-2 py-1 bg-emerald-50 text-emerald-700 rounded-lg font-bold hover:bg-emerald-100">+ Shots</button>
+                    <button type="button" onClick={() => addModalLineItem('shots')} className="text-[10px] px-2 py-1 bg-emerald-50 text-emerald-700 rounded-lg font-bold hover:bg-emerald-100">+ Short Form Content</button>
                     <button type="button" onClick={() => addModalLineItem('integrated')} className="text-[10px] px-2 py-1 bg-indigo-50 text-indigo-700 rounded-lg font-bold hover:bg-indigo-100">+ Integrated</button>
                     <button type="button" onClick={() => addModalLineItem('adRead')} className="text-[10px] px-2 py-1 bg-rose-50 text-rose-700 rounded-lg font-bold hover:bg-rose-100">+ Ad Read</button>
                     <button type="button" onClick={() => addModalLineItem('commercialUsage')} className="text-[10px] px-2 py-1 bg-amber-50 text-amber-700 rounded-lg font-bold hover:bg-amber-100">+ Commercial</button>
