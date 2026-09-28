@@ -44,6 +44,14 @@ export const LINE_ITEM_TEMPLATES: Record<Exclude<LineItemKey, 'custom'>, LineIte
     defaultPrice: 150,
     defaultQuantity: 5,
   },
+  adRead: {
+    key: 'adRead',
+    label: 'Ad Read / Sponsored Mention',
+    description: 'A scripted, straight-to-camera or voiceover ad read/shoutout naturally worked into the video, separate from a full product segment.',
+    unitLabel: 'flat rate per ad read',
+    badge: 'Sponsored',
+    defaultPrice: 400,
+  },
 };
 
 let counter = 0;
@@ -81,7 +89,7 @@ export function createLineItem(key: LineItemKey, overrides: Partial<PricingLineI
 }
 
 export function defaultLineItems(): PricingLineItem[] {
-  return [createLineItem('dedicated'), createLineItem('integrated'), createLineItem('commercialUsage')];
+  return [createLineItem('dedicated'), createLineItem('shots'), createLineItem('integrated'), createLineItem('adRead')];
 }
 
 export function lineItemTotal(item: PricingLineItem): number {
@@ -91,8 +99,9 @@ export function lineItemTotal(item: PricingLineItem): number {
 export function legacyTokenToLineItems(tok: { dedicatedPrice?: any; integratedPrice?: any; commercialUsagePrice?: any }): PricingLineItem[] {
   return [
     createLineItem('dedicated', { price: Number(tok.dedicatedPrice) || 1200 }),
+    createLineItem('shots'),
     createLineItem('integrated', { price: Number(tok.integratedPrice) || 600 }),
-    createLineItem('commercialUsage', { price: Number(tok.commercialUsagePrice) || 350 }),
+    createLineItem('adRead'),
   ];
 }
 

@@ -61,8 +61,9 @@ export const onRequestGet: PagesFunction = async (context) => {
       ? tokenData.lineItems.filter((li: any) => li.enabled !== false)
       : [
           { id: 'dedicated', key: 'dedicated', label: 'Dedicated Deep-Dive Video', description: 'A standalone 10–18 minute comprehensive build or review focusing 100% on your developer tool, SDK, or AI workflow.', price: tokenData.dedicatedPrice || 1200, unitLabel: 'flat rate per produced video', badge: 'Full Feature', enabled: true },
+          { id: 'shots', key: 'shots', label: 'Shots Package', description: 'A bundle of short-form vertical shots/clips (Reels, Shorts, TikTok-style cuts) featuring your product for fast, high-frequency visibility.', price: 150, quantity: 5, unitLabel: 'per shot', badge: 'Short-Form', enabled: true },
           { id: 'integrated', key: 'integrated', label: 'Integrated Segment (60–90s)', description: 'A seamless mid-roll or organic problem-solving showcase embedded directly into a major architectural tutorial.', price: tokenData.integratedPrice || 600, unitLabel: 'flat rate per segment placement', badge: 'High Impact', enabled: true },
-          { id: 'commercialUsage', key: 'commercialUsage', label: 'Commercial Usage Rights', description: '60-day paid advertising & whitelisting rights to cut, run, and repurpose video segments on your brand social channels and landing pages.', price: tokenData.commercialUsagePrice || 350, unitLabel: 'add-on license', badge: 'Add-On', enabled: true },
+          { id: 'adRead', key: 'adRead', label: 'Ad Read / Sponsored Mention', description: 'A scripted, straight-to-camera or voiceover ad read/shoutout naturally worked into the video, separate from a full product segment.', price: 400, unitLabel: 'flat rate per ad read', badge: 'Sponsored', enabled: true },
         ];
 
     return jsonResponse({

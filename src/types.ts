@@ -49,7 +49,7 @@ export interface KitToken {
   lineItems?: PricingLineItem[];
 }
 
-export type LineItemKey = 'dedicated' | 'integrated' | 'commercialUsage' | 'shots' | 'custom';
+export type LineItemKey = 'dedicated' | 'shots' | 'integrated' | 'adRead' | 'commercialUsage' | 'custom';
 
 export interface PricingLineItem {
   id: string;

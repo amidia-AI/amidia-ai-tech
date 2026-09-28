@@ -2,7 +2,7 @@ import { jsonResponse, readBody, stripHtml, randomHex } from '../../_shared/help
 import { requireAdmin } from '../../_shared/auth';
 import { kvSet, kvGet } from '../../_shared/kv';
 
-const VALID_LINE_ITEM_KEYS = ['dedicated', 'integrated', 'commercialUsage', 'shots', 'custom'];
+const VALID_LINE_ITEM_KEYS = ['dedicated', 'shots', 'integrated', 'adRead', 'commercialUsage', 'custom'];
 
 function sanitizeLineItems(input: any): any[] {
   if (!Array.isArray(input)) return [];

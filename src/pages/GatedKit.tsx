@@ -85,6 +85,11 @@ const RATE_CARD_BULLETS: Record<string, string[]> = {
     'Quick native product callout woven into each shot',
     'Delivered ready-to-post, no extra editing needed',
   ],
+  adRead: [
+    'Scripted, on-brand ad read or shoutout',
+    'Placement point (pre-roll, mid-roll, or outro) by agreement',
+    'Verbal CTA + on-screen link/coupon callout',
+  ],
   custom: [
     'Scope and deliverables confirmed directly over email',
     'Flexible turnaround based on campaign needs',

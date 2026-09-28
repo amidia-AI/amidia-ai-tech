@@ -10,9 +10,9 @@ import { extractContactInfo } from '../utils/extractContactInfo';
 import { createLineItem, defaultLineItems, lineItemTotal, legacyTokenToLineItems } from '../utils/lineItems';
 
 const DEFAULT_PRESETS: PricingPreset[] = [
-  { id: 'standard', name: 'Standard Rate', description: 'Default rates', expiryDays: '14', isCustom: false, lineItems: [createLineItem('dedicated', { price: 1200 }), createLineItem('integrated', { price: 600 }), createLineItem('commercialUsage', { price: 350 })] },
-  { id: 'discounted', name: 'Discounted (15%)', description: 'For long term partners', expiryDays: '14', isCustom: false, lineItems: [createLineItem('dedicated', { price: 1020 }), createLineItem('integrated', { price: 510 }), createLineItem('commercialUsage', { price: 350 })] },
-  { id: 'premium', name: 'Premium Rush', description: 'Fast turnaround', expiryDays: '7', isCustom: false, lineItems: [createLineItem('dedicated', { price: 1500 }), createLineItem('integrated', { price: 800 }), createLineItem('commercialUsage', { price: 500 })] }
+  { id: 'standard', name: 'Standard Rate', description: 'Default rates', expiryDays: '14', isCustom: false, lineItems: [createLineItem('dedicated', { price: 1200 }), createLineItem('shots', { price: 150, quantity: 5 }), createLineItem('integrated', { price: 600 }), createLineItem('adRead', { price: 400 })] },
+  { id: 'discounted', name: 'Discounted (15%)', description: 'For long term partners', expiryDays: '14', isCustom: false, lineItems: [createLineItem('dedicated', { price: 1020 }), createLineItem('shots', { price: 130, quantity: 5 }), createLineItem('integrated', { price: 510 }), createLineItem('adRead', { price: 340 })] },
+  { id: 'premium', name: 'Premium Rush', description: 'Fast turnaround', expiryDays: '7', isCustom: false, lineItems: [createLineItem('dedicated', { price: 1500 }), createLineItem('shots', { price: 180, quantity: 5 }), createLineItem('integrated', { price: 800 }), createLineItem('adRead', { price: 500 })] }
 ];
 
 function formatMoneyShort(n: number): string {
@@ -72,10 +72,20 @@ export function Admin() {
       const saved = localStorage.getItem('amidia_pricing_presets');
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Migrate legacy presets (flat dedicatedPrice/integratedPrice/commercialUsagePrice) to lineItems
-        return parsed.map((p: any) =>
-          Array.isArray(p.lineItems) ? p : { ...p, lineItems: legacyTokenToLineItems(p) }
-        );
+        const defaultsById = new Map(DEFAULT_PRESETS.map(p => [p.id, p]));
+        return parsed.map((p: any) => {
+          // Migrate legacy presets (flat dedicatedPrice/integratedPrice/commercialUsagePrice) to lineItems
+          if (!Array.isArray(p.lineItems)) return { ...p, lineItems: legacyTokenToLineItems(p) };
+          // Upgrade the built-in presets to the current 4-item shape (Dedicated, Shots, Integrated, Ad Read)
+          // if they were saved before Shots/Ad Read existed, without touching admin-customized presets.
+          const builtIn = defaultsById.get(p.id);
+          const hasShots = p.lineItems.some((li: any) => li.key === 'shots');
+          const hasAdRead = p.lineItems.some((li: any) => li.key === 'adRead');
+          if (builtIn && !p.isCustom && (!hasShots || !hasAdRead)) {
+            return builtIn;
+          }
+          return p;
+        });
       }
     } catch(e){}
     return DEFAULT_PRESETS;
@@ -568,9 +578,10 @@ export function Admin() {
                 ))}
                 <div className="flex flex-wrap gap-1.5 pt-1">
                   <button type="button" onClick={() => addPresetDraftLineItem('dedicated')} className="text-[10px] px-2 py-1 bg-sky-50 text-sky-700 rounded-lg font-bold hover:bg-sky-100">+ Dedicated</button>
-                  <button type="button" onClick={() => addPresetDraftLineItem('integrated')} className="text-[10px] px-2 py-1 bg-indigo-50 text-indigo-700 rounded-lg font-bold hover:bg-indigo-100">+ Integrated</button>
-                  <button type="button" onClick={() => addPresetDraftLineItem('commercialUsage')} className="text-[10px] px-2 py-1 bg-amber-50 text-amber-700 rounded-lg font-bold hover:bg-amber-100">+ Commercial</button>
                   <button type="button" onClick={() => addPresetDraftLineItem('shots')} className="text-[10px] px-2 py-1 bg-emerald-50 text-emerald-700 rounded-lg font-bold hover:bg-emerald-100">+ Shots</button>
+                  <button type="button" onClick={() => addPresetDraftLineItem('integrated')} className="text-[10px] px-2 py-1 bg-indigo-50 text-indigo-700 rounded-lg font-bold hover:bg-indigo-100">+ Integrated</button>
+                  <button type="button" onClick={() => addPresetDraftLineItem('adRead')} className="text-[10px] px-2 py-1 bg-rose-50 text-rose-700 rounded-lg font-bold hover:bg-rose-100">+ Ad Read</button>
+                  <button type="button" onClick={() => addPresetDraftLineItem('commercialUsage')} className="text-[10px] px-2 py-1 bg-amber-50 text-amber-700 rounded-lg font-bold hover:bg-amber-100">+ Commercial</button>
                   <button type="button" onClick={() => addPresetDraftLineItem('custom')} className="text-[10px] px-2 py-1 bg-neutral-100 text-neutral-700 rounded-lg font-bold hover:bg-neutral-200">+ Custom</button>
                 </div>
               </div>
@@ -827,9 +838,10 @@ export function Admin() {
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     <button type="button" onClick={() => addModalLineItem('dedicated')} className="text-[10px] px-2 py-1 bg-sky-50 text-sky-700 rounded-lg font-bold hover:bg-sky-100">+ Dedicated</button>
-                    <button type="button" onClick={() => addModalLineItem('integrated')} className="text-[10px] px-2 py-1 bg-indigo-50 text-indigo-700 rounded-lg font-bold hover:bg-indigo-100">+ Integrated</button>
-                    <button type="button" onClick={() => addModalLineItem('commercialUsage')} className="text-[10px] px-2 py-1 bg-amber-50 text-amber-700 rounded-lg font-bold hover:bg-amber-100">+ Commercial</button>
                     <button type="button" onClick={() => addModalLineItem('shots')} className="text-[10px] px-2 py-1 bg-emerald-50 text-emerald-700 rounded-lg font-bold hover:bg-emerald-100">+ Shots</button>
+                    <button type="button" onClick={() => addModalLineItem('integrated')} className="text-[10px] px-2 py-1 bg-indigo-50 text-indigo-700 rounded-lg font-bold hover:bg-indigo-100">+ Integrated</button>
+                    <button type="button" onClick={() => addModalLineItem('adRead')} className="text-[10px] px-2 py-1 bg-rose-50 text-rose-700 rounded-lg font-bold hover:bg-rose-100">+ Ad Read</button>
+                    <button type="button" onClick={() => addModalLineItem('commercialUsage')} className="text-[10px] px-2 py-1 bg-amber-50 text-amber-700 rounded-lg font-bold hover:bg-amber-100">+ Commercial</button>
                     <button type="button" onClick={() => addModalLineItem('custom')} className="text-[10px] px-2 py-1 bg-neutral-100 text-neutral-700 rounded-lg font-bold hover:bg-neutral-200">+ Custom</button>
                   </div>
                 </div>
