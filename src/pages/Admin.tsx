@@ -15,6 +15,12 @@ const DEFAULT_PRESETS: PricingPreset[] = [
   { id: 'premium', name: 'Premium Rush', description: 'Fast turnaround', expiryDays: '7', isCustom: false, lineItems: [createLineItem('dedicated', { price: 1500 }), createLineItem('shots', { price: 100, quantity: 1 }), createLineItem('integrated', { price: 800 }), createLineItem('adRead', { price: 500 })] }
 ];
 
+// Number inputs silently change value on mouse-wheel scroll in Chrome/Edge when
+// focused; blurring on wheel lets the page scroll normally instead of mutating price/quantity.
+function blurOnWheel(e: React.WheelEvent<HTMLInputElement>) {
+  e.currentTarget.blur();
+}
+
 function formatMoneyShort(n: number): string {
   return n >= 1000 ? `${(n / 1000).toFixed(n % 1000 === 0 ? 0 : 1)}k` : String(n);
 }
@@ -573,8 +579,8 @@ export function Admin() {
                       <button type="button" onClick={() => removePresetDraftLineItem(li.id)} className="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600" title="Remove item"><Trash2 className="w-3.5 h-3.5" /></button>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
-                      <input type="number" value={li.price} onChange={e => updatePresetDraftLineItem(li.id, { price: Number(e.target.value) })} className="px-2 py-1 border rounded-lg text-xs" placeholder="Price ($)" />
-                      <input type="number" min={1} value={li.quantity ?? ''} onChange={e => updatePresetDraftLineItem(li.id, { quantity: e.target.value === '' ? undefined : Number(e.target.value) })} className="px-2 py-1 border rounded-lg text-xs" placeholder="Quantity (e.g. # of videos)" />
+                      <input type="number" value={li.price} onChange={e => updatePresetDraftLineItem(li.id, { price: Number(e.target.value) })} onWheel={blurOnWheel} className="px-2 py-1 border rounded-lg text-xs" placeholder="Price ($)" />
+                      <input type="number" min={1} value={li.quantity ?? ''} onChange={e => updatePresetDraftLineItem(li.id, { quantity: e.target.value === '' ? undefined : Number(e.target.value) })} onWheel={blurOnWheel} className="px-2 py-1 border rounded-lg text-xs" placeholder="Quantity (e.g. # of videos)" />
                     </div>
                   </div>
                 ))}
@@ -589,7 +595,7 @@ export function Admin() {
               </div>
               <div>
                 <label className="text-xs font-bold text-neutral-700">Expiry (Days)</label>
-                <input required type="number" value={presetDraft.expiryDays || '14'} onChange={e => setPresetDraft({...presetDraft, expiryDays: e.target.value})} className="w-full mt-1 px-3 py-2 border rounded-xl" />
+                <input required type="number" value={presetDraft.expiryDays || '14'} onChange={e => setPresetDraft({...presetDraft, expiryDays: e.target.value})} onWheel={blurOnWheel} className="w-full mt-1 px-3 py-2 border rounded-xl" />
               </div>
               <button type="submit" className="w-full py-3 bg-neutral-950 text-white rounded-xl font-bold hover:bg-neutral-800">
                 Save Preset
@@ -829,8 +835,8 @@ export function Admin() {
                           <button type="button" onClick={() => removeModalLineItem(li.id)} className="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600" title="Remove item"><Trash2 className="w-3.5 h-3.5" /></button>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
-                          <input type="number" value={li.price} onChange={e => updateModalLineItem(li.id, { price: Number(e.target.value) })} className="px-2 py-1 border rounded-lg text-xs" placeholder="Price ($)" />
-                          <input type="number" min={1} value={li.quantity ?? ''} onChange={e => updateModalLineItem(li.id, { quantity: e.target.value === '' ? undefined : Number(e.target.value) })} className="px-2 py-1 border rounded-lg text-xs" placeholder="Quantity (e.g. # of videos)" />
+                          <input type="number" value={li.price} onChange={e => updateModalLineItem(li.id, { price: Number(e.target.value) })} onWheel={blurOnWheel} className="px-2 py-1 border rounded-lg text-xs" placeholder="Price ($)" />
+                          <input type="number" min={1} value={li.quantity ?? ''} onChange={e => updateModalLineItem(li.id, { quantity: e.target.value === '' ? undefined : Number(e.target.value) })} onWheel={blurOnWheel} className="px-2 py-1 border rounded-lg text-xs" placeholder="Quantity (e.g. # of videos)" />
                         </div>
                       </div>
                     ))}
